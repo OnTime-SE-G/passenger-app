@@ -28,10 +28,6 @@ class AppColors {
 
   // Surfaces — tonal layering hierarchy
   static const Color background = Color(0xFF11131C);
-
-  /// Behind `icon.png` on splash: matches the asset’s solid canvas so transparent
-  /// pixels (shown as checkerboard on web) read as a seamless full-screen fill.
-  static const Color splashIconBackdrop = Color(0xFF2F2F34);
   static const Color surface = Color(0xFF11131C);
   static const Color surfaceDim = Color(0xFF11131C);
   static const Color surfaceContainerLowest = Color(0xFF0C0E17);

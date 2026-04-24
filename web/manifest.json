@@ -1,6 +1,6 @@
 {
-    "name": "passenger_app",
-    "short_name": "passenger_app",
+    "name": "On Time",
+    "short_name": "On Time",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

@@ -22,7 +22,7 @@ class PassengerApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'OnTime',
+      title: 'On Time',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.build(context),
       home: const SplashScreen(),

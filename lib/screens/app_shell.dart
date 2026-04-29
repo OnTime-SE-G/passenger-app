@@ -149,57 +149,57 @@ class _BottomNav extends StatelessWidget {
                   AppSpacing.sm,
                 ),
                 child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: List.generate(tabs.length, (i) {
                     final tab = tabs[i];
                     final active = i == currentIndex;
-                    return Expanded(
-                      child: Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          onTap: () => onTap(i),
-                          borderRadius: BorderRadius.circular(18),
-                          splashColor: AppColors.primary.withOpacity(0.08),
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 220),
-                            curve: Curves.easeOutCubic,
-                            padding: const EdgeInsets.symmetric(
-                              vertical: 8,
-                              horizontal: 4,
-                            ),
-                            margin: const EdgeInsets.symmetric(horizontal: 2),
-                            decoration: BoxDecoration(
-                              color: active
-                                  ? AppColors.primary.withOpacity(0.12)
-                                  : Colors.transparent,
-                              borderRadius: BorderRadius.circular(18),
-                            ),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  active ? tab.activeIcon : tab.icon,
-                                  size: 24,
-                                  color: active
-                                      ? AppColors.primary
-                                      : AppColors.navInactive,
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  tab.label,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: GoogleFonts.plusJakartaSans(
-                                    fontSize: 10,
-                                    fontWeight:
-                                        active ? FontWeight.w700 : FontWeight.w500,
-                                    letterSpacing: 0.02,
-                                    color: active
-                                        ? AppColors.primary
-                                        : AppColors.navInactive,
-                                  ),
-                                ),
-                              ],
-                            ),
+                    return Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () => onTap(i),
+                        borderRadius: BorderRadius.circular(24),
+                        splashColor: AppColors.primary.withOpacity(0.08),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 250),
+                          curve: Curves.easeOutCubic,
+                          padding: EdgeInsets.symmetric(
+                            vertical: 12,
+                            horizontal: active ? 16 : 12,
+                          ),
+                          decoration: BoxDecoration(
+                            color: active
+                                ? AppColors.primary.withOpacity(0.12)
+                                : Colors.transparent,
+                            borderRadius: BorderRadius.circular(24),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                active ? tab.activeIcon : tab.icon,
+                                size: 24,
+                                color: active
+                                    ? AppColors.primary
+                                    : AppColors.navInactive,
+                              ),
+                              AnimatedSize(
+                                duration: const Duration(milliseconds: 250),
+                                curve: Curves.easeOutCubic,
+                                child: active 
+                                    ? Padding(
+                                        padding: const EdgeInsets.only(left: 6),
+                                        child: Text(
+                                          tab.label,
+                                          style: GoogleFonts.plusJakartaSans(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w700,
+                                            color: AppColors.primary,
+                                          ),
+                                        ),
+                                      )
+                                    : const SizedBox.shrink(),
+                              ),
+                            ],
                           ),
                         ),
                       ),

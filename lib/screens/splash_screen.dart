@@ -2,15 +2,12 @@ import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
-import 'package:flutter_map/flutter_map.dart';
-import 'package:latlong2/latlong.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
-import '../widgets/map_widgets.dart';
 import 'app_shell.dart';
 
-/// Splash: cartoon road, central bus stop, bus arrives → boards passenger → leaves.
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -22,21 +19,16 @@ class _SplashScreenState extends State<SplashScreen>
     with TickerProviderStateMixin {
   late final AnimationController _sceneCtl;
   late final AnimationController _fadeCtl;
-  late final AnimationController _mapZoomCtl;
-  late final Animation<double> _fadeIn;
   late final Animation<double> _fadeOut;
-  late final Animation<double> _mapZoom;
-  late final Animation<double> _mapOpacity;
 
-  final _mapCtl = MapController();
+  static const double _busArriveEnd = 0.30;
+  static const double _doorOpenEnd = 0.40;
+  static const double _boardEnd = 0.55;
+  static const double _doorCloseEnd = 0.65;
+  static const double _departEnd = 0.90;
 
-  /// Story beats on one timeline [0,1]:
-  /// ~0–0.26 arrive · ~0.26–0.40 dwell · ~0.40–0.56 board · ~0.56–1.0 depart
-  static const double _arriveEnd = 0.26;
-  static const double _dwellEnd = 0.40;
-  static const double _boardEnd = 0.56;
-
-  static const double _kBusLayoutW = 132.0;
+  static const double _kBusWidth = 180.0;
+  static const double _kBusHeight = 80.0;
 
   @override
   void initState() {
@@ -44,27 +36,14 @@ class _SplashScreenState extends State<SplashScreen>
 
     _sceneCtl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 9200),
-    );
-
-    _mapZoomCtl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 3200),
-    );
-    _mapZoom = Tween(begin: 12.0, end: 14.5).animate(
-      CurvedAnimation(parent: _mapZoomCtl, curve: Curves.easeOut),
-    );
-    _mapOpacity = Tween(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _mapZoomCtl, curve: const Interval(0.0, 0.28)),
+      duration: const Duration(milliseconds: 5500),
     );
 
     _fadeCtl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 550),
+      duration: const Duration(milliseconds: 600),
     );
-    _fadeIn = Tween(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _sceneCtl, curve: const Interval(0.0, 0.12)),
-    );
+
     _fadeOut = Tween(begin: 1.0, end: 0.0).animate(
       CurvedAnimation(parent: _fadeCtl, curve: Curves.easeInCubic),
     );
@@ -73,17 +52,15 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   Future<void> _startSequence() async {
-    _mapZoomCtl.forward();
-    await Future.delayed(const Duration(milliseconds: 280));
+    await Future.delayed(const Duration(milliseconds: 200));
     await _sceneCtl.forward();
-    await Future.delayed(const Duration(milliseconds: 520));
     _fadeCtl.forward();
     await _fadeCtl.forward().orCancel;
     if (!mounted) return;
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
         pageBuilder: (_, __, ___) => const AppShell(),
-        transitionDuration: const Duration(milliseconds: 480),
+        transitionDuration: const Duration(milliseconds: 600),
         transitionsBuilder: (_, anim, __, child) =>
             FadeTransition(opacity: anim, child: child),
       ),
@@ -94,50 +71,59 @@ class _SplashScreenState extends State<SplashScreen>
   void dispose() {
     _sceneCtl.dispose();
     _fadeCtl.dispose();
-    _mapZoomCtl.dispose();
     super.dispose();
   }
 
-  double _busLayoutLeft(double screenW, double t) {
-    const busW = _kBusLayoutW;
-    final roadInset = AppSpacing.lg;
-    final roadMidX = roadInset + (screenW - 2 * roadInset) / 2;
-    final stopLeft = roadMidX - busW / 2;
+  double _busLeft(double screenW, double t) {
+    final stopLeft = screenW * 0.5 - _kBusWidth / 2;
 
-    if (t <= _arriveEnd) {
-      final u = Curves.easeOutCubic.transform(t / _arriveEnd);
-      final startLeft = -busW * 0.92;
-      return ui.lerpDouble(startLeft, stopLeft, u)!;
+    if (t <= _busArriveEnd) {
+      final u = Curves.easeOutCubic.transform(t / _busArriveEnd);
+      return ui.lerpDouble(-_kBusWidth * 1.2, stopLeft, u)!;
     }
-    if (t <= _boardEnd) {
+    if (t <= _doorCloseEnd) {
       return stopLeft;
     }
-    final u = Curves.easeInCubic.transform((t - _boardEnd) / (1.0 - _boardEnd));
-    final exitLeft = screenW + busW * 0.45;
-    return ui.lerpDouble(stopLeft, exitLeft, u)!;
+    if (t <= _departEnd) {
+      final u = Curves.easeInCubic.transform(
+          (t - _doorCloseEnd) / (_departEnd - _doorCloseEnd));
+      return ui.lerpDouble(stopLeft, screenW + _kBusWidth * 0.5, u)!;
+    }
+    return screenW + _kBusWidth;
   }
 
-  /// Passenger walks shelter → door [dwellEnd, boardEnd].
-  ({double x, double opacity}) _passengerAt(double screenW, double t) {
-    final roadInset = AppSpacing.lg;
-    final roadMid = roadInset + (screenW - 2 * roadInset) / 2;
-    const busW = _kBusLayoutW;
-    final stopLeft = roadMid - busW / 2;
-    final doorX = stopLeft + 44;
+  double _doorOpenProgress(double t) {
+    if (t < _busArriveEnd) return 0.0;
+    if (t < _doorOpenEnd) {
+      return ((t - _busArriveEnd) / (_doorOpenEnd - _busArriveEnd)).clamp(0.0, 1.0);
+    }
+    if (t < _boardEnd) return 1.0;
+    if (t < _doorCloseEnd) {
+      return 1.0 - ((t - _boardEnd) / (_doorCloseEnd - _boardEnd)).clamp(0.0, 1.0);
+    }
+    return 0.0;
+  }
 
-    if (t < _dwellEnd) {
-      return (x: roadMid - 48, opacity: t > 0.06 ? 1.0 : 0.0);
+  ({double x, double opacity, double stride}) _passengerState(double screenW, double t) {
+    final shelterX = screenW * 0.5 + 40.0;
+    final busStopLeft = screenW * 0.5 - _kBusWidth / 2;
+    // Door is roughly at 70% of bus width from left (front door)
+    final doorX = busStopLeft + _kBusWidth * 0.75;
+
+    if (t < _doorOpenEnd) {
+      return (x: shelterX, opacity: 1.0, stride: 0.0);
     }
-    if (t >= _boardEnd) {
-      return (x: doorX, opacity: 0.0);
+    if (t >= _doorCloseEnd) {
+      return (x: doorX, opacity: 0.0, stride: 0.0);
     }
-    final bt = Curves.easeInOut.transform(
-      ((t - _dwellEnd) / (_boardEnd - _dwellEnd)).clamp(0.0, 1.0),
-    );
-    final startX = roadMid - 48;
-    final x = ui.lerpDouble(startX, doorX, bt)!;
-    final fadeBoard = bt > 0.72 ? (1.0 - ((bt - 0.72) / 0.28)).clamp(0.0, 1.0) : 1.0;
-    return (x: x, opacity: fadeBoard);
+
+    final bt = ((t - _doorOpenEnd) / (_boardEnd - _doorOpenEnd)).clamp(0.0, 1.0);
+    final curve = Curves.easeInOut.transform(bt);
+    final x = ui.lerpDouble(shelterX, doorX, curve)!;
+    final opacity = bt > 0.8 ? (1.0 - ((bt - 0.8) / 0.2)) : 1.0;
+    final stride = math.sin(bt * math.pi * 8);
+
+    return (x: x, opacity: opacity, stride: stride);
   }
 
   @override
@@ -145,174 +131,149 @@ class _SplashScreenState extends State<SplashScreen>
     final size = MediaQuery.of(context).size;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.primaryFixed,
       body: AnimatedBuilder(
-        animation: Listenable.merge([_sceneCtl, _fadeCtl, _mapZoomCtl]),
+        animation: Listenable.merge([_sceneCtl, _fadeCtl]),
         builder: (_, __) {
-          // Must read scene progress inside this builder — outer `build` does not
-          // run each animation tick, so a `t` captured there would stay at 0.0.
           final t = _sceneCtl.value;
-          try {
-            _mapCtl.move(
-              const LatLng(12.9716, 77.5946),
-              _mapZoom.value,
-            );
-          } catch (_) {}
-
-          final busLeft = _busLayoutLeft(size.width, t);
-          final pass = _passengerAt(size.width, t);
+          final busLeft = _busLeft(size.width, t);
+          final doorProgress = _doorOpenProgress(t);
+          final pass = _passengerState(size.width, t);
 
           return Opacity(
             opacity: _fadeOut.value,
             child: Stack(
               children: [
-                Opacity(
-                  opacity: _mapOpacity.value,
-                  child: FlutterMap(
-                    mapController: _mapCtl,
-                    options: const MapOptions(
-                      initialCenter: LatLng(12.9716, 77.5946),
-                      initialZoom: 12,
-                      interactionOptions: InteractionOptions(
-                        flags: InteractiveFlag.none,
-                      ),
-                    ),
-                    children: const [
-                      AppMapTiles(),
-                    ],
-                  ),
-                ),
-
-                Container(
-                  decoration: BoxDecoration(
-                    gradient: RadialGradient(
-                      center: Alignment.center,
-                      radius: 1.05,
-                      colors: [
-                        Colors.white.withOpacity(0),
-                        AppColors.primaryFixed.withOpacity(0.38),
-                        AppColors.background.withOpacity(0.96),
-                      ],
-                      stops: const [0.0, 0.52, 1.0],
-                    ),
-                  ),
-                ),
-
+                // Sky background
                 Positioned.fill(
-                  child: Opacity(
-                    opacity: (_fadeIn.value * 0.45).clamp(0.0, 0.45),
+                  child: Container(
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Color(0xFF7DD3FC), // Light sky blue
+                          Color(0xFFE0F2FE),
+                          Color(0xFFF1F5F9),
+                        ],
+                        stops: [0.0, 0.6, 1.0],
+                      ),
+                    ),
+                  ),
+                ),
+                // Sun / Clouds
+                Positioned(
+                  top: size.height * 0.15,
+                  right: size.width * 0.15,
+                  child: const _SunWidget(),
+                ),
+                Positioned(
+                  top: size.height * 0.25,
+                  left: size.width * 0.1,
+                  child: const _CloudWidget(width: 120, height: 40),
+                ),
+                Positioned(
+                  top: size.height * 0.18,
+                  right: size.width * 0.4,
+                  child: const _CloudWidget(width: 80, height: 30, opacity: 0.6),
+                ),
+
+                // City skyline silhouette
+                Positioned(
+                  bottom: size.height * 0.35 + 20,
+                  left: 0,
+                  right: 0,
+                  height: 120,
+                  child: const _Cityscape(),
+                ),
+
+                // Ground & Road
+                Positioned(
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  height: size.height * 0.35,
+                  child: Container(
+                    color: const Color(0xFFD4D4D8), // Sidewalk area
+                  ),
+                ),
+                Positioned(
+                  bottom: size.height * 0.1,
+                  left: 0,
+                  right: 0,
+                  height: size.height * 0.2,
+                  child: CustomPaint(
+                    painter: _PerspectiveRoadPainter(progress: t),
+                  ),
+                ),
+
+                // Bus Stop Shelter
+                Positioned(
+                  bottom: size.height * 0.3,
+                  left: size.width * 0.5 + 10,
+                  width: 100,
+                  height: 120,
+                  child: const _BusStopShelter(),
+                ),
+
+                // Passenger
+                if (pass.opacity > 0.01)
+                  Positioned(
+                    bottom: size.height * 0.3,
+                    left: pass.x - 15,
+                    child: Opacity(
+                      opacity: pass.opacity,
+                      child: SizedBox(
+                        width: 30,
+                        height: 50,
+                        child: CustomPaint(
+                          painter: _CharacterPainter(stride: pass.stride),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                // Bus
+                Positioned(
+                  bottom: size.height * 0.3 - 10,
+                  left: busLeft,
+                  child: SizedBox(
+                    width: _kBusWidth,
+                    height: _kBusHeight,
                     child: CustomPaint(
-                      painter: _RouteLinesPainter(
-                        progress: t,
-                        color: AppColors.secondary,
+                      painter: _CinematicBusPainter(
+                        primary: AppColors.primary,
+                        accent: AppColors.secondary,
+                        doorProgress: doorProgress,
+                        isMoving: t < _busArriveEnd || t > _doorCloseEnd,
+                        time: t,
                       ),
                     ),
                   ),
                 ),
 
-                Center(
-                  child: Transform.translate(
-                    offset: Offset(0, -size.height * 0.07),
-                    child: Container(
-                      width: 300,
-                      height: 280,
-                      decoration: BoxDecoration(
-                        gradient: RadialGradient(
-                          colors: [
-                            AppColors.primaryContainer.withOpacity(0.18 * _fadeIn.value),
-                            AppColors.secondary.withOpacity(0.05 * _fadeIn.value),
-                            Colors.transparent,
-                          ],
-                          stops: const [0.0, 0.42, 1.0],
-                        ),
+                // Top Logo
+                Positioned(
+                  top: size.height * 0.35,
+                  left: 0,
+                  right: 0,
+                  child: Center(
+                    child: Opacity(
+                      opacity: t > 0.1 ? Curves.easeIn.transform(((t - 0.1) / 0.2).clamp(0.0, 1.0)) : 0.0,
+                      child: Column(
+                        children: [
+                          Text(
+                            'Your City. On Time.',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.primary,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ),
-                ),
-
-                // Road scene: asphalt + stop + bus + passenger
-                Positioned(
-                  bottom: size.height * 0.33,
-                  left: 0,
-                  right: 0,
-                  height: 124,
-                  child: Opacity(
-                    opacity: _fadeIn.value,
-                    child: Stack(
-                      clipBehavior: Clip.none,
-                      alignment: Alignment.bottomCenter,
-                      children: [
-                        Positioned(
-                          left: AppSpacing.lg,
-                          right: AppSpacing.lg,
-                          bottom: 0,
-                          height: 56,
-                          child: const _Road(),
-                        ),
-                        // Bus stop (center of road strip)
-                        Positioned(
-                          left: 0,
-                          right: 0,
-                          bottom: 8,
-                          height: 72,
-                          child: CustomPaint(
-                            painter: _BusStopPainter(
-                              roadInset: AppSpacing.lg,
-                              screenWidth: size.width,
-                            ),
-                          ),
-                        ),
-                        Positioned(
-                          bottom: 14,
-                          left: busLeft,
-                          child: SizedBox(
-                            width: _kBusLayoutW,
-                            height: 58,
-                            child: CustomPaint(
-                              painter: _CartoonBusPainter(
-                                primary: AppColors.primary,
-                                accent: AppColors.secondary,
-                              ),
-                            ),
-                          ),
-                        ),
-                        if (pass.opacity > 0.02)
-                          Positioned(
-                            left: pass.x - 14,
-                            bottom: 14,
-                            child: Opacity(
-                              opacity: pass.opacity,
-                              child: SizedBox(
-                                width: 28,
-                                height: 42,
-                                child: CustomPaint(
-                                  painter: _CartoonPersonPainter(
-                                    stride: t >= _dwellEnd && t < _boardEnd
-                                        ? math.sin(
-                                            ((t - _dwellEnd) /
-                                                    (_boardEnd - _dwellEnd))
-                                                .clamp(0.0, 1.0) *
-                                                math.pi *
-                                                14,
-                                          )
-                                        : 0.0,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                ),
-
-                Positioned(
-                  bottom: size.height * 0.09,
-                  left: 0,
-                  right: 0,
-                  child: Opacity(
-                    opacity: _fadeIn.value,
-                    child: _LoadingDots(progress: t),
                   ),
                 ),
               ],
@@ -324,407 +285,329 @@ class _SplashScreenState extends State<SplashScreen>
   }
 }
 
-class _RouteLinesPainter extends CustomPainter {
-  _RouteLinesPainter({required this.progress, required this.color});
-  final double progress;
-  final Color color;
-
+class _SunWidget extends StatelessWidget {
+  const _SunWidget();
   @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color.withOpacity(0.28)
-      ..strokeWidth = 2
-      ..style = PaintingStyle.stroke;
-
-    final dashPaint = Paint()
-      ..color = AppColors.primary.withOpacity(0.14)
-      ..strokeWidth = 1.5
-      ..style = PaintingStyle.stroke;
-
-    final path1 = ui.Path()
-      ..moveTo(0, size.height * 0.3)
-      ..cubicTo(
-        size.width * 0.25,
-        size.height * 0.15,
-        size.width * 0.55,
-        size.height * 0.45,
-        size.width * progress,
-        size.height * 0.35,
-      );
-
-    final path2 = ui.Path()
-      ..moveTo(size.width * 0.1, size.height * 0.7)
-      ..cubicTo(
-        size.width * 0.35,
-        size.height * 0.55,
-        size.width * 0.7,
-        size.height * 0.65,
-        size.width * 0.85 * progress,
-        size.height * 0.5,
-      );
-
-    canvas.drawPath(path1, paint);
-    canvas.drawPath(path2, dashPaint);
-
-    if (progress > 0.18) {
-      final metrics1 = path1.computeMetrics().firstOrNull;
-      if (metrics1 != null) {
-        final pos = metrics1.getTangentForOffset(metrics1.length)?.position;
-        if (pos != null) {
-          canvas.drawCircle(pos, 4, Paint()..color = color);
-        }
-      }
-    }
+  Widget build(BuildContext context) {
+    return Container(
+      width: 60,
+      height: 60,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: const Color(0xFFFDE047),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFFEF08A).withOpacity(0.6),
+            blurRadius: 30,
+            spreadRadius: 15,
+          ),
+        ],
+      ),
+    );
   }
-
-  @override
-  bool shouldRepaint(covariant _RouteLinesPainter old) =>
-      old.progress != progress;
 }
 
-class _AsphaltRoadPainter extends CustomPainter {
+class _CloudWidget extends StatelessWidget {
+  final double width;
+  final double height;
+  final double opacity;
+  const _CloudWidget({required this.width, required this.height, this.opacity = 0.8});
+
+  @override
+  Widget build(BuildContext context) {
+    return Opacity(
+      opacity: opacity,
+      child: Container(
+        width: width,
+        height: height,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(height / 2),
+        ),
+      ),
+    );
+  }
+}
+
+class _Cityscape extends StatelessWidget {
+  const _Cityscape();
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(
+      painter: _CityPainter(),
+    );
+  }
+}
+
+class _CityPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    final rrect = RRect.fromRectAndRadius(
-      Rect.fromLTWH(0, 0, size.width, size.height),
-      const Radius.circular(10),
-    );
-    canvas.drawRRect(
-      rrect,
-      Paint()
-        ..shader = LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: const [
-            Color(0xFF94A3B8),
-            Color(0xFF64748B),
-            Color(0xFF475569),
-          ],
-          stops: [0.0, 0.5, 1.0],
-        ).createShader(Rect.fromLTWH(0, 0, size.width, size.height)),
-    );
-
-    final outline = Paint()
-      ..color = const Color(0xFF334155)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.5;
-    canvas.drawRRect(rrect, outline);
-
-    final shoulder = Paint()
-      ..color = Colors.white
-      ..strokeWidth = 3
-      ..strokeCap = StrokeCap.round;
-    canvas.drawLine(Offset(12, 10), Offset(12, size.height - 10), shoulder);
-    canvas.drawLine(
-      Offset(size.width - 12, 10),
-      Offset(size.width - 12, size.height - 10),
-      shoulder,
-    );
-
-    final midY = size.height / 2;
-    final dash = Paint()
-      ..color = const Color(0xFFFDE047)
-      ..strokeWidth = 2.6
-      ..strokeCap = StrokeCap.round;
-    var x = 18.0;
-    while (x < size.width - 26) {
-      canvas.drawLine(Offset(x, midY), Offset(x + 12, midY), dash);
-      x += 24;
+    final paint = Paint()..color = const Color(0xFFCBD5E1).withOpacity(0.5);
+    final random = math.Random(42);
+    double x = 0;
+    while (x < size.width) {
+      final w = 30.0 + random.nextDouble() * 40.0;
+      final h = 30.0 + random.nextDouble() * 80.0;
+      canvas.drawRect(Rect.fromLTWH(x, size.height - h, w, h), paint);
+      x += w + 5;
     }
   }
-
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
-class _Road extends StatelessWidget {
-  const _Road();
-
-  @override
-  Widget build(BuildContext context) {
-    return CustomPaint(
-      painter: _AsphaltRoadPainter(),
-      child: const SizedBox.expand(),
-    );
-  }
-}
-
-/// Cartoon shelter + pole — bold outlines.
-class _BusStopPainter extends CustomPainter {
-  _BusStopPainter({required this.roadInset, required this.screenWidth});
-
-  final double roadInset;
-  final double screenWidth;
+class _PerspectiveRoadPainter extends CustomPainter {
+  final double progress;
+  _PerspectiveRoadPainter({required this.progress});
 
   @override
   void paint(Canvas canvas, Size size) {
-    final cx = screenWidth / 2;
-    final roofW = 64.0;
-    final roofH = 28.0;
-    final roofLeft = cx - roofW / 2;
-
-    final roof = RRect.fromRectAndRadius(
-      Rect.fromLTWH(roofLeft, 8, roofW, roofH),
-      const Radius.circular(10),
-    );
-    canvas.drawRRect(
-      roof,
-      Paint()..color = const Color(0xFFE2E8F0),
-    );
-    canvas.drawRRect(
-      roof,
+    final rect = Rect.fromLTWH(0, 0, size.width, size.height);
+    
+    // Road Base
+    canvas.drawRect(
+      rect,
       Paint()
-        ..color = const Color(0xFF1E293B)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 3,
+        ..shader = const LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color(0xFF64748B), Color(0xFF334155)],
+        ).createShader(rect),
     );
 
-    final pole = RRect.fromRectAndRadius(
-      Rect.fromLTWH(cx - 5, roofH + 6, 10, size.height - roofH - 6),
-      const Radius.circular(4),
-    );
-    canvas.drawRRect(pole, Paint()..color = const Color(0xFF475569));
-    canvas.drawRRect(
-      pole,
-      Paint()
-        ..color = const Color(0xFF0F172A)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2,
-    );
+    // Top and Bottom Curbs
+    final curbPaint = Paint()..color = const Color(0xFF94A3B8);
+    canvas.drawRect(Rect.fromLTWH(0, 0, size.width, 8), curbPaint);
+    canvas.drawRect(Rect.fromLTWH(0, size.height - 8, size.width, 8), curbPaint);
 
-    final sign = RRect.fromRectAndRadius(
-      Rect.fromLTWH(cx - 22, roofH + 2, 44, 18),
-      const Radius.circular(6),
-    );
-    canvas.drawRRect(sign, Paint()..color = AppColors.secondary);
-    canvas.drawRRect(
-      sign,
-      Paint()
-        ..color = const Color(0xFF0E7490)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2,
-    );
+    // Dashed Center Line (moving)
+    final midY = size.height / 2;
+    final dashPaint = Paint()
+      ..color = const Color(0xFFFDE047)
+      ..strokeWidth = 4
+      ..strokeCap = StrokeCap.round;
 
-    final busLabel = TextPainter(
-      text: TextSpan(
-        text: 'BUS',
-        style: TextStyle(
-          color: Colors.white,
-          fontSize: 11,
-          fontWeight: FontWeight.w800,
-          height: 1,
-        ),
-      ),
-      textDirection: TextDirection.ltr,
-    )..layout();
-    busLabel.paint(canvas, Offset(cx - busLabel.width / 2, roofH + 5));
+    final dashWidth = 40.0;
+    final spaceWidth = 40.0;
+    final totalWidth = dashWidth + spaceWidth;
+    
+    // Animate lines if progress indicates bus movement
+    double offset = 0;
+    if (progress < 0.3) {
+       offset = (1.0 - progress / 0.3) * totalWidth * 5;
+    } else if (progress > 0.65) {
+       offset = ((progress - 0.65) / 0.35) * totalWidth * 10;
+    }
+
+    double x = -(offset % totalWidth) - dashWidth;
+    while (x < size.width) {
+      canvas.drawLine(Offset(x, midY), Offset(x + dashWidth, midY), dashPaint);
+      x += totalWidth;
+    }
   }
-
   @override
-  bool shouldRepaint(covariant _BusStopPainter oldDelegate) =>
-      oldDelegate.screenWidth != screenWidth || oldDelegate.roadInset != roadInset;
+  bool shouldRepaint(covariant _PerspectiveRoadPainter oldDelegate) => oldDelegate.progress != progress;
 }
 
-/// Bold-outline cartoon coach — flat fills, readable shapes.
-class _CartoonBusPainter extends CustomPainter {
-  _CartoonBusPainter({required this.primary, required this.accent});
+class _BusStopShelter extends StatelessWidget {
+  const _BusStopShelter();
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(painter: _ShelterPainter());
+  }
+}
 
+class _ShelterPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final stroke = Paint()
+      ..color = const Color(0xFF1E293B)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 3;
+    final fill = Paint()..color = const Color(0xFFE2E8F0).withOpacity(0.9);
+    final glass = Paint()..color = const Color(0xFFBAE6FD).withOpacity(0.4);
+
+    // Back glass
+    canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(10, 20, 80, 90), const Radius.circular(8)), glass);
+    canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(10, 20, 80, 90), const Radius.circular(8)), stroke);
+
+    // Roof
+    final roof = RRect.fromRectAndRadius(Rect.fromLTWH(0, 10, 100, 15), const Radius.circular(6));
+    canvas.drawRRect(roof, fill);
+    canvas.drawRRect(roof, stroke);
+
+    // Pillars
+    canvas.drawRect(Rect.fromLTWH(15, 25, 6, 95), fill);
+    canvas.drawRect(Rect.fromLTWH(15, 25, 6, 95), stroke);
+    canvas.drawRect(Rect.fromLTWH(79, 25, 6, 95), fill);
+    canvas.drawRect(Rect.fromLTWH(79, 25, 6, 95), stroke);
+
+    // Bus Stop Sign
+    canvas.drawCircle(const Offset(90, -10), 12, Paint()..color = AppColors.secondary);
+    canvas.drawCircle(const Offset(90, -10), 12, stroke);
+    canvas.drawRect(Rect.fromLTWH(88, 2, 4, 18), stroke..style = PaintingStyle.fill);
+  }
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class _CharacterPainter extends CustomPainter {
+  final double stride;
+  _CharacterPainter({required this.stride});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final ox = size.width / 2;
+    final stroke = Paint()
+      ..color = const Color(0xFF1E293B)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.5;
+
+    // Head
+    canvas.drawCircle(Offset(ox, 10), 8, Paint()..color = const Color(0xFFFDE68A));
+    canvas.drawCircle(Offset(ox, 10), 8, stroke);
+
+    // Body
+    final body = RRect.fromRectAndRadius(Rect.fromLTWH(ox - 8, 20, 16, 20), const Radius.circular(6));
+    canvas.drawRRect(body, Paint()..color = AppColors.primary);
+    canvas.drawRRect(body, stroke);
+
+    // Legs
+    final legSwing = stride * 6;
+    final legPaint = Paint()
+      ..color = const Color(0xFF1E293B)
+      ..strokeWidth = 3.5
+      ..strokeCap = StrokeCap.round;
+    canvas.drawLine(Offset(ox - 3, 40), Offset(ox - 3 + legSwing, 50), legPaint);
+    canvas.drawLine(Offset(ox + 3, 40), Offset(ox + 3 - legSwing, 50), legPaint);
+  }
+  @override
+  bool shouldRepaint(covariant _CharacterPainter oldDelegate) => oldDelegate.stride != stride;
+}
+
+class _CinematicBusPainter extends CustomPainter {
   final Color primary;
   final Color accent;
+  final double doorProgress;
+  final bool isMoving;
+  final double time;
 
-  static const stroke = Color(0xFF134E4A);
-  static const ink = Color(0xFF042F2E);
+  _CinematicBusPainter({
+    required this.primary,
+    required this.accent,
+    required this.doorProgress,
+    required this.isMoving,
+    required this.time,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
     final w = size.width;
     final h = size.height;
+    
+    // Add tiny bounce when moving
+    double bounceY = 0;
+    if (isMoving) {
+      bounceY = math.sin(time * 50) * 1.5;
+    }
 
+    canvas.save();
+    canvas.translate(0, bounceY);
+
+    final stroke = Paint()
+      ..color = const Color(0xFF042F2E)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 3;
+
+    // Shadow
     canvas.drawOval(
-      Rect.fromCenter(center: Offset(w / 2, h - 5), width: w * 0.92, height: 10),
+      Rect.fromCenter(center: Offset(w/2, h), width: w * 0.9, height: 10),
       Paint()
-        ..color = Colors.black.withOpacity(0.2)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8),
+        ..color = Colors.black.withOpacity(0.3)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6),
     );
 
-    void wheel(double cx, double cy) {
-      canvas.drawCircle(Offset(cx, cy), 11, Paint()..color = const Color(0xFF111827));
+    // Main Body
+    final body = RRect.fromRectAndCorners(
+      Rect.fromLTWH(5, 10, w - 10, h - 25),
+      topLeft: const Radius.circular(16),
+      topRight: const Radius.circular(24),
+      bottomLeft: const Radius.circular(12),
+      bottomRight: const Radius.circular(12),
+    );
+    canvas.drawRRect(body, Paint()..color = primary);
+    
+    // Bottom Stripe
+    final stripe = RRect.fromRectAndCorners(
+      Rect.fromLTWH(5, h - 35, w - 10, 10),
+      bottomLeft: const Radius.circular(0),
+      bottomRight: const Radius.circular(0),
+    );
+    canvas.drawRRect(stripe, Paint()..color = accent);
+    canvas.drawRRect(body, stroke);
+
+    // Windows
+    final winRect = RRect.fromRectAndRadius(Rect.fromLTWH(15, 20, w - 30, 25), const Radius.circular(8));
+    canvas.drawRRect(winRect, Paint()..color = const Color(0xFFBAE6FD));
+    canvas.drawRRect(winRect, stroke);
+
+    // Window Dividers
+    for (double x = 40; x < w - 20; x += 30) {
+      canvas.drawLine(Offset(x, 20), Offset(x, 45), stroke);
+    }
+
+    // Wheels
+    void drawWheel(double cx, double cy) {
+      canvas.drawCircle(Offset(cx, cy), 14, Paint()..color = const Color(0xFF111827));
+      canvas.drawCircle(Offset(cx, cy), 14, stroke);
+      canvas.drawCircle(Offset(cx, cy), 6, Paint()..color = const Color(0xFF94A3B8));
+    }
+    drawWheel(35, h - 10);
+    drawWheel(w - 40, h - 10);
+
+    // Headlight
+    canvas.drawCircle(Offset(w - 12, h - 25), 6, Paint()..color = const Color(0xFFFEF08A));
+    canvas.drawCircle(Offset(w - 12, h - 25), 6, stroke);
+
+    // Taillight
+    canvas.drawCircle(Offset(10, h - 25), 4, Paint()..color = const Color(0xFFEF4444));
+    canvas.drawCircle(Offset(10, h - 25), 4, stroke);
+
+    // Door Animation
+    // Front door location
+    final doorX = w * 0.75;
+    final doorWidth = 22.0;
+    
+    // Door hole (dark interior)
+    canvas.drawRect(Rect.fromLTWH(doorX - doorWidth/2, 20, doorWidth, h - 45), Paint()..color = const Color(0xFF0F172A));
+    
+    // Animated Doors (sliding open from center)
+    final openAmount = doorProgress * (doorWidth / 2);
+    final doorPaint = Paint()..color = primary.withOpacity(0.95);
+    
+    // Left door panel
+    final leftDoor = Rect.fromLTWH(doorX - doorWidth/2 - openAmount, 20, doorWidth/2, h - 45);
+    canvas.drawRect(leftDoor, doorPaint);
+    canvas.drawRect(leftDoor, stroke..strokeWidth = 2);
+
+    // Right door panel
+    final rightDoor = Rect.fromLTWH(doorX + openAmount, 20, doorWidth/2, h - 45);
+    canvas.drawRect(rightDoor, doorPaint);
+    canvas.drawRect(rightDoor, stroke..strokeWidth = 2);
+
+    // Exhaust Puff if moving fast (end of animation)
+    if (isMoving && time > 0.7) {
+      final puffScale = math.sin(time * 20).abs();
       canvas.drawCircle(
-        Offset(cx, cy),
-        11,
-        Paint()
-          ..color = ink
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 2.5,
-      );
-      canvas.drawCircle(
-        Offset(cx, cy),
-        5,
-        Paint()..color = const Color(0xFFE5E7EB),
+        Offset(-10 - puffScale * 10, h - 15), 
+        8 + puffScale * 6, 
+        Paint()..color = Colors.white.withOpacity(0.6)
       );
     }
 
-    wheel(28, h - 12);
-    wheel(w - 28, h - 12);
-
-    final body = RRect.fromRectAndCorners(
-      Rect.fromLTWH(5, 10, w - 10, 28),
-      topLeft: const Radius.circular(14),
-      topRight: const Radius.circular(18),
-      bottomLeft: const Radius.circular(10),
-      bottomRight: const Radius.circular(12),
-    );
-    canvas.drawRRect(body, Paint()..color = accent);
-    canvas.drawRRect(
-      body,
-      Paint()
-        ..color = stroke
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 3,
-    );
-
-    final roofBump = RRect.fromRectAndRadius(
-      Rect.fromLTWH(18, 5, w - 36, 14),
-      const Radius.circular(10),
-    );
-    canvas.drawRRect(roofBump, Paint()..color = primary);
-    canvas.drawRRect(
-      roofBump,
-      Paint()
-        ..color = ink
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 3,
-    );
-
-    final win = RRect.fromRectAndRadius(
-      Rect.fromLTWH(14, 15, w - 52, 14),
-      const Radius.circular(6),
-    );
-    canvas.drawRRect(win, Paint()..color = Colors.white);
-    canvas.drawRRect(
-      win,
-      Paint()
-        ..color = stroke
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2.5,
-    );
-
-    final door = RRect.fromRectAndRadius(
-      Rect.fromLTWH(38, 18, 22, 18),
-      const Radius.circular(5),
-    );
-    canvas.drawRRect(door, Paint()..color = primary.withOpacity(0.92));
-    canvas.drawRRect(
-      door,
-      Paint()
-        ..color = ink
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2,
-    );
-
-    final hl = Paint()..color = const Color(0xFFFDE047);
-    canvas.drawCircle(Offset(w - 18, h - 18), 5, hl);
-    canvas.drawCircle(
-      Offset(w - 18, h - 18),
-      5,
-      Paint()
-        ..color = ink
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2,
-    );
-
-    canvas.drawCircle(Offset(w - 31, h - 18), 5, hl);
-    canvas.drawCircle(
-      Offset(w - 31, h - 18),
-      5,
-      Paint()
-        ..color = ink
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2,
-    );
-
-    final grin = Paint()
-      ..color = Colors.white.withOpacity(0.35)
-      ..strokeWidth = 2;
-    canvas.drawLine(const Offset(22, 22), Offset(w - 56, 22), grin);
+    canvas.restore();
   }
-
   @override
-  bool shouldRepaint(covariant _CartoonBusPainter oldDelegate) =>
-      oldDelegate.primary != primary || oldDelegate.accent != accent;
-}
-
-/// Tiny cartoon commuter — blob body + stride hint.
-class _CartoonPersonPainter extends CustomPainter {
-  _CartoonPersonPainter({required this.stride});
-
-  final double stride;
-
-  static const _inkDark = Color(0xFF1E293B);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final ox = size.width / 2;
-    final headY = 10.0;
-    canvas.drawCircle(
-      Offset(ox, headY),
-      8,
-      Paint()
-        ..color = const Color(0xFFFBBF24)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2.5,
-    );
-    canvas.drawCircle(Offset(ox, headY), 7, Paint()..color = const Color(0xFFFDE68A));
-
-    final torso = RRect.fromRectAndRadius(
-      Rect.fromCenter(center: Offset(ox, 26), width: 18, height: 16),
-      const Radius.circular(8),
-    );
-    canvas.drawRRect(torso, Paint()..color = AppColors.primary);
-    canvas.drawRRect(
-      torso,
-      Paint()
-        ..color = _inkDark
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2.5,
-    );
-
-    final legSwing = stride * 3;
-    final lp = Paint()
-      ..color = _inkDark
-      ..strokeWidth = 3
-      ..strokeCap = StrokeCap.round;
-    canvas.drawLine(Offset(ox - 5, 34), Offset(ox - 7 + legSwing, 40), lp);
-    canvas.drawLine(Offset(ox + 5, 34), Offset(ox + 7 - legSwing, 40), lp);
-  }
-
-  @override
-  bool shouldRepaint(covariant _CartoonPersonPainter oldDelegate) =>
-      oldDelegate.stride != stride;
-}
-
-class _LoadingDots extends StatelessWidget {
-  const _LoadingDots({required this.progress});
-  final double progress;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: List.generate(3, (i) {
-        final threshold = (i + 1) / 4;
-        final active = progress >= threshold;
-        return AnimatedContainer(
-          duration: const Duration(milliseconds: 260),
-          width: active ? 18 : 7,
-          height: 7,
-          margin: const EdgeInsets.symmetric(horizontal: 3),
-          decoration: BoxDecoration(
-            color: active ? AppColors.secondary : AppColors.outlineVariant.withOpacity(0.35),
-            borderRadius: BorderRadius.circular(4),
-          ),
-        );
-      }),
-    );
-  }
+  bool shouldRepaint(covariant _CinematicBusPainter oldDelegate) => 
+    oldDelegate.doorProgress != doorProgress || oldDelegate.time != time;
 }

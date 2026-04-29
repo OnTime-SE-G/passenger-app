@@ -76,7 +76,6 @@ class BusPosition {
     required this.nextStopIndex,
   });
 }
-
 class RecentSearch {
   final String from;
   final String to;
@@ -88,3 +87,4 @@ class RecentSearch {
     required this.at,
   });
 }
+

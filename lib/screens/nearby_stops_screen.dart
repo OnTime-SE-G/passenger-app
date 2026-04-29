@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:latlong2/latlong.dart';
-
 import '../data/demo_repository.dart';
 import '../data/models.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
+import '../theme/app_theme.dart';
 import '../theme/app_typography.dart';
 import '../widgets/app_card.dart';
 import '../widgets/map_widgets.dart';
@@ -15,7 +14,7 @@ import '../widgets/route_badge.dart';
 import '../widgets/sheet_handle.dart';
 import 'stop_details_screen.dart';
 
-/// Screen 2 — Full dark map with nearby stops in a draggable bottom sheet.
+/// Nearby stops — Voyager map + draggable sheet over light chrome.
 class NearbyStopsScreen extends StatefulWidget {
   const NearbyStopsScreen({super.key, this.destinationQuery});
   final String? destinationQuery;
@@ -46,6 +45,7 @@ class _NearbyStopsScreenState extends State<NearbyStopsScreen> {
     final nearby = _repo.nearbyStops(_repo.userLocation);
 
     return Scaffold(
+      backgroundColor: AppColors.background,
       body: Stack(
         children: [
           buildMap(
@@ -82,21 +82,19 @@ class _NearbyStopsScreenState extends State<NearbyStopsScreen> {
             left: AppSpacing.lg,
             right: AppSpacing.lg,
             child: Container(
-              decoration: BoxDecoration(
-                color: AppColors.surfaceContainerHighest.withOpacity(0.8),
-                borderRadius: BorderRadius.circular(AppSpacing.buttonRadius),
-                border: Border.all(color: Colors.white.withOpacity(0.05)),
+              decoration: glassPanelDecoration(
+                radius: AppSpacing.buttonRadius,
               ),
               child: Row(
                 children: [
                   IconButton(
                     onPressed: () => Navigator.of(context).maybePop(),
-                    icon: const Icon(Icons.arrow_back, color: AppColors.primary),
+                    icon: const Icon(Icons.arrow_back, color: AppColors.onSurface),
                   ),
                   Expanded(
                     child: Text(
                       widget.destinationQuery ?? 'Nearby Stops',
-                      style: GoogleFonts.manrope(
+                      style: GoogleFonts.plusJakartaSans(
                         fontSize: 14,
                         color: AppColors.onSurface,
                       ),
@@ -117,13 +115,11 @@ class _NearbyStopsScreenState extends State<NearbyStopsScreen> {
                   icon: Icons.my_location,
                   onPressed: () => _mapCtl.move(_repo.userLocation, 15),
                 ),
-                const SizedBox(height: AppSpacing.sm),
-                _MapFab(icon: Icons.layers_outlined, onPressed: () {}),
               ],
             ),
           ),
 
-          // Bottom sheet
+          // Draggable sheet
           DraggableScrollableSheet(
             initialChildSize: 0.38,
             minChildSize: 0.18,
@@ -149,7 +145,7 @@ class _NearbyStopsScreenState extends State<NearbyStopsScreen> {
                           Text('Nearby stops', style: AppTypography.headline(20)),
                           const Spacer(),
                           Text('${nearby.length} found',
-                              style: GoogleFonts.manrope(color: AppColors.outline, fontSize: 12)),
+                              style: GoogleFonts.plusJakartaSans(color: AppColors.outline, fontSize: 12)),
                         ],
                       ),
                     ),
@@ -248,12 +244,12 @@ class _StopTile extends StatelessWidget {
                 Text(stop.name,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.spaceGrotesk(
+                    style: GoogleFonts.plusJakartaSans(
                         fontWeight: FontWeight.w700, color: AppColors.onSurface, fontSize: 15)),
                 const SizedBox(height: 2),
                 Text(
                   '${meters.toStringAsFixed(0)} m · ${stop.routeIds.length} routes',
-                  style: GoogleFonts.manrope(fontSize: 12, color: AppColors.outline),
+                  style: GoogleFonts.plusJakartaSans(fontSize: 12, color: AppColors.outline),
                 ),
               ],
             ),

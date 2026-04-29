@@ -1,0 +1,481 @@
+import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+
+import '../data/demo_repository.dart';
+import '../data/models.dart';
+import '../theme/app_colors.dart';
+import '../theme/app_spacing.dart';
+import '../theme/app_theme.dart';
+import '../theme/app_typography.dart';
+import '../widgets/ontime_logo.dart';
+import 'live_tracking_screen.dart';
+
+/// Active routes nearby — filters + ETA rows + jump to live tracking.
+class NearbyBusRoutesScreen extends StatefulWidget {
+  const NearbyBusRoutesScreen({super.key});
+
+  @override
+  State<NearbyBusRoutesScreen> createState() => _NearbyBusRoutesScreenState();
+}
+
+class _NearbyBusRoutesScreenState extends State<NearbyBusRoutesScreen> {
+  final _repo = DemoRepository.instance;
+  final _destinationFilter = TextEditingController();
+  int _sortOption = 0;
+  static const _sortLabels = ['Shortest ETA', 'Distance', 'Route Number'];
+
+  static const _serviceTypes = [
+    'Standard AC',
+    'Express',
+    'Regular',
+    'Semi-Express',
+    'Regular',
+    'Standard AC',
+  ];
+
+  @override
+  void dispose() {
+    _destinationFilter.dispose();
+    super.dispose();
+  }
+
+  List<_BusRowVm> _buildRows() {
+    final rows = <_BusRowVm>[];
+    for (var i = 0; i < _repo.buses.length; i++) {
+      final bus = _repo.buses[i];
+      final route = _repo.routeById(bus.routeId);
+      final pos = _repo.snapshotFor(bus.id);
+      final delayed = pos.status == BusLiveStatus.delayed;
+      rows.add(
+        _BusRowVm(
+          bus: bus,
+          route: route,
+          etaMinutes: pos.etaMinutes,
+          delayed: delayed,
+          serviceType: _serviceTypes[i % _serviceTypes.length],
+        ),
+      );
+    }
+
+    final dest = _destinationFilter.text.trim().toLowerCase();
+    if (dest.isNotEmpty) {
+      rows.retainWhere(
+        (r) => r.route.destination.toLowerCase().contains(dest),
+      );
+    }
+
+    rows.sort((a, b) {
+      switch (_sortOption) {
+        case 0:
+          return a.etaMinutes.compareTo(b.etaMinutes);
+        case 1:
+          return a.etaMinutes.compareTo(b.etaMinutes);
+        default:
+          return a.route.code.compareTo(b.route.code);
+      }
+    });
+
+    return rows;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final rows = _buildRows();
+
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.xl,
+                AppSpacing.sm,
+                AppSpacing.xl,
+                AppSpacing.sm,
+              ),
+              child: Row(
+                children: [
+                  const OnTimeLogo(size: OnTimeLogoSize.small),
+                  const Spacer(),
+                  IconButton(
+                    icon: const Icon(Icons.search),
+                    color: AppColors.navInactive,
+                    onPressed: () {},
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.xl,
+                  0,
+                  AppSpacing.xl,
+                  120,
+                ),
+                children: [
+                  Text(
+                    'Active Routes',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 28,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: -0.4,
+                      color: AppColors.onSurface,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    '${rows.length} ${rows.length == 1 ? 'bus' : 'buses'} available',
+                    style: AppTypography.body(15),
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: Wrap(
+                      spacing: 8,
+                      children: List.generate(_sortLabels.length, (i) {
+                        final sel = _sortOption == i;
+                        return ChoiceChip(
+                          label: Text(_sortLabels[i]),
+                          selected: sel,
+                          onSelected: (_) =>
+                              setState(() => _sortOption = i),
+                          selectedColor:
+                              AppColors.secondary.withOpacity(0.14),
+                          labelStyle: GoogleFonts.plusJakartaSans(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13,
+                            color: sel ? AppColors.secondary : AppColors.onSurface,
+                          ),
+                          backgroundColor: AppColors.surfaceContainerHigh,
+                          side: BorderSide.none,
+                        );
+                      }),
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+
+                  // Destination filter card
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.lg,
+                      vertical: AppSpacing.sm,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.surfaceContainerLowest,
+                      borderRadius:
+                          BorderRadius.circular(AppSpacing.cardRadius),
+                      boxShadow: kAmbientShadow,
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.filter_alt_outlined,
+                            color: AppColors.outline),
+                        const SizedBox(width: AppSpacing.sm),
+                        Expanded(
+                          child: TextField(
+                            controller: _destinationFilter,
+                            onChanged: (_) => setState(() {}),
+                            decoration: const InputDecoration(
+                              hintText:
+                                  'Filter by destination (e.g. North Station)',
+                              border: InputBorder.none,
+                              isDense: true,
+                            ),
+                          ),
+                        ),
+                        if (_destinationFilter.text.isNotEmpty)
+                          IconButton(
+                            icon: const Icon(Icons.close),
+                            onPressed: () {
+                              _destinationFilter.clear();
+                              setState(() {});
+                            },
+                          ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.xl),
+
+                  if (rows.isEmpty)
+                    _EmptyFilterState()
+                  else
+                    ...rows.map(
+                      (row) => Padding(
+                        padding:
+                            const EdgeInsets.only(bottom: AppSpacing.md),
+                        child: _BusRouteCard(
+                          row: row,
+                          onSelect: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute<void>(
+                                builder: (_) => LiveTrackingScreen(
+                                  busId: row.bus.id,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _BusRowVm {
+  _BusRowVm({
+    required this.bus,
+    required this.route,
+    required this.etaMinutes,
+    required this.delayed,
+    required this.serviceType,
+  });
+
+  final Bus bus;
+  final BusRoute route;
+  final int etaMinutes;
+  final bool delayed;
+  final String serviceType;
+}
+
+class _BusRouteCard extends StatelessWidget {
+  const _BusRouteCard({
+    required this.row,
+    required this.onSelect,
+  });
+
+  final _BusRowVm row;
+  final VoidCallback onSelect;
+
+  @override
+  Widget build(BuildContext context) {
+    final bgBadge = row.delayed
+        ? AppColors.surfaceContainerHigh
+        : AppColors.primary.withOpacity(0.12);
+
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceContainerLowest,
+        borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
+        boxShadow: kAmbientShadow,
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 64,
+            height: 64,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: bgBadge,
+              borderRadius: BorderRadius.circular(AppSpacing.md),
+            ),
+            child: Text(
+              row.route.code,
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+                color: row.delayed
+                    ? AppColors.onSurfaceVariant
+                    : AppColors.primary,
+              ),
+            ),
+          ),
+          const SizedBox(width: AppSpacing.lg),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        row.route.name,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w700,
+                          height: 1.25,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: row.delayed
+                            ? AppColors.errorBright.withOpacity(0.12)
+                            : AppColors.success.withOpacity(0.12),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 6,
+                            height: 6,
+                            decoration: BoxDecoration(
+                              color: row.delayed
+                                  ? AppColors.errorBright
+                                  : AppColors.success,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            row.delayed ? 'Delayed' : 'Active',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: row.delayed
+                                  ? AppColors.errorBright
+                                  : AppColors.success,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Icon(Icons.schedule,
+                        size: 16, color: AppColors.onSurfaceVariant),
+                    const SizedBox(width: 4),
+                    Text.rich(
+                      TextSpan(
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 14,
+                          color: AppColors.onSurfaceVariant,
+                        ),
+                        children: [
+                          const TextSpan(text: 'ETA: '),
+                          TextSpan(
+                            text: '${row.etaMinutes} mins',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontWeight: FontWeight.w700,
+                              color: row.delayed
+                                  ? AppColors.errorBright
+                                  : AppColors.primary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      width: 4,
+                      height: 4,
+                      margin: const EdgeInsets.symmetric(horizontal: 8),
+                      decoration: const BoxDecoration(
+                        color: AppColors.outlineVariant,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    Icon(Icons.directions_bus_outlined,
+                        size: 16, color: AppColors.onSurfaceVariant),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        row.serviceType,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 14,
+                          color: AppColors.onSurfaceVariant,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [AppColors.primary, AppColors.primaryFixedDim],
+              ),
+              borderRadius: BorderRadius.circular(AppSpacing.buttonRadius),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.primary.withOpacity(0.22),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: onSelect,
+                borderRadius:
+                    BorderRadius.circular(AppSpacing.buttonRadius),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.lg,
+                    vertical: AppSpacing.md,
+                  ),
+                  child: Text(
+                    'Select Bus',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _EmptyFilterState extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.xxl),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceContainerLowest,
+        borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
+        boxShadow: kAmbientShadow,
+      ),
+      child: Column(
+        children: [
+          Icon(Icons.search_off, size: 56, color: AppColors.outlineVariant),
+          const SizedBox(height: AppSpacing.md),
+          Text(
+            'No Buses Found',
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Text(
+            'Try adjusting your filter to see more results.',
+            style: AppTypography.body(14),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+}

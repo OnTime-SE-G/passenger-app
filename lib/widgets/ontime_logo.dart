@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../theme/app_colors.dart';
-import '../theme/app_spacing.dart';
 
 /// OnTime brand logo widget — bus icon + wordmark. Used in app bars & splash.
 class OnTimeLogo extends StatelessWidget {
@@ -44,12 +43,12 @@ class OnTimeLogo extends StatelessWidget {
         if (showText) ...[
           SizedBox(width: gap),
           Text(
-            'OnTime',
-            style: GoogleFonts.spaceGrotesk(
+            'On Time',
+            style: GoogleFonts.plusJakartaSans(
               fontSize: fontSize,
               fontWeight: FontWeight.w900,
               color: AppColors.primary,
-              letterSpacing: 1,
+              letterSpacing: -0.5,
             ),
           ),
         ],
@@ -94,12 +93,12 @@ class _BusIcon extends StatelessWidget {
               width: size * 0.85,
               height: size * 0.65,
               decoration: BoxDecoration(
-                color: AppColors.secondaryContainer,
+                color: AppColors.primaryContainer,
                 borderRadius: BorderRadius.circular(size * 0.18),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.secondary.withOpacity(0.3),
-                    blurRadius: size * 0.3,
+                    color: AppColors.primary.withOpacity(0.25),
+                    blurRadius: size * 0.25,
                   ),
                 ],
               ),
@@ -117,7 +116,7 @@ class _BusIcon extends StatelessWidget {
                             height: size * 0.18,
                             margin: EdgeInsets.only(right: i < 2 ? size * 0.04 : 0),
                             decoration: BoxDecoration(
-                              color: AppColors.secondary.withOpacity(0.3),
+                              color: Colors.white.withOpacity(0.35),
                               borderRadius: BorderRadius.circular(size * 0.04),
                             ),
                           ),
@@ -133,12 +132,12 @@ class _BusIcon extends StatelessWidget {
                       width: size * 0.1,
                       height: size * 0.1,
                       decoration: BoxDecoration(
-                        color: AppColors.secondary,
+                        color: Colors.white,
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.secondary.withOpacity(0.8),
-                            blurRadius: size * 0.15,
+                            color: Colors.black.withOpacity(0.12),
+                            blurRadius: size * 0.12,
                           ),
                         ],
                       ),
@@ -156,14 +155,14 @@ class _BusIcon extends StatelessWidget {
               width: size * 0.35,
               height: size * 0.35,
               decoration: BoxDecoration(
-                color: AppColors.primaryContainer,
+                color: AppColors.primaryFixed,
                 shape: BoxShape.circle,
-                border: Border.all(color: AppColors.background, width: 2),
+                border: Border.all(color: Colors.white, width: 2),
               ),
               child: Icon(
                 Icons.schedule,
                 size: size * 0.18,
-                color: AppColors.secondary,
+                color: AppColors.primary,
               ),
             ),
           ),

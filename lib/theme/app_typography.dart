@@ -3,43 +3,46 @@ import 'package:google_fonts/google_fonts.dart';
 
 import 'app_colors.dart';
 
-/// Typography: Space Grotesk for headlines, Manrope for body/labels.
+/// Plus Jakarta Sans — single contemporary family for headings + UI copy.
 class AppTypography {
   AppTypography._();
 
   static TextStyle headline(double size, {FontWeight weight = FontWeight.w700}) =>
-      GoogleFonts.spaceGrotesk(
+      GoogleFonts.plusJakartaSans(
         fontSize: size,
         fontWeight: weight,
         color: AppColors.onSurface,
-        letterSpacing: -0.3,
+        letterSpacing: -0.028,
+        height: 1.15,
       );
 
   static TextStyle body(double size, {FontWeight weight = FontWeight.w400, Color? color}) =>
-      GoogleFonts.manrope(
+      GoogleFonts.plusJakartaSans(
         fontSize: size,
         fontWeight: weight,
         color: color ?? AppColors.onSurfaceVariant,
+        height: 1.45,
       );
 
   static TextStyle label(double size, {FontWeight weight = FontWeight.w700, Color? color}) =>
-      GoogleFonts.manrope(
+      GoogleFonts.plusJakartaSans(
         fontSize: size,
         fontWeight: weight,
         color: color ?? AppColors.onSurfaceVariant,
-        letterSpacing: 0.8,
+        letterSpacing: 0.04,
       );
 
   static TextTheme textTheme(BuildContext context) {
     return TextTheme(
-      displayLarge: headline(36, weight: FontWeight.w900),
+      displayLarge: headline(36, weight: FontWeight.w800),
       headlineLarge: headline(28),
       headlineMedium: headline(22),
       titleLarge: headline(20, weight: FontWeight.w600),
-      titleMedium: GoogleFonts.manrope(
+      titleMedium: GoogleFonts.plusJakartaSans(
         fontSize: 16,
         fontWeight: FontWeight.w600,
         color: AppColors.onSurface,
+        letterSpacing: -0.02,
       ),
       bodyLarge: body(16),
       bodyMedium: body(14),

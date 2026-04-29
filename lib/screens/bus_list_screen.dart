@@ -5,16 +5,13 @@ import '../data/demo_repository.dart';
 import '../data/models.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
-import '../theme/app_typography.dart';
 import '../widgets/app_card.dart';
 import '../widgets/route_badge.dart';
 import '../widgets/search_field.dart';
 import '../widgets/status_chip.dart';
-import 'destination_filter_sheet.dart';
-import 'filtered_bus_selection_screen.dart';
 import 'live_tracking_screen.dart';
 
-/// Screen 4 — Bus list for a stop (dark theme).
+/// Buses serving a selected stop — pick line then track live.
 class BusListScreen extends StatefulWidget {
   const BusListScreen({super.key, required this.stop});
   final BusStop stop;
@@ -59,19 +56,31 @@ class _BusListScreenState extends State<BusListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.primary),
+          icon: const Icon(Icons.arrow_back),
+          color: AppColors.onSurface,
           onPressed: () => Navigator.of(context).maybePop(),
         ),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Buses at',
-                style: GoogleFonts.spaceGrotesk(
-                    fontWeight: FontWeight.w700, fontSize: 16, color: AppColors.onSurface)),
-            Text(widget.stop.name,
-                style: GoogleFonts.manrope(fontSize: 12, color: AppColors.onSurfaceVariant)),
+            Text(
+              'Buses at',
+              style: GoogleFonts.plusJakartaSans(
+                fontWeight: FontWeight.w700,
+                fontSize: 16,
+                color: AppColors.onSurface,
+              ),
+            ),
+            Text(
+              widget.stop.name,
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 13,
+                color: AppColors.onSurfaceVariant,
+              ),
+            ),
           ],
         ),
       ),
@@ -81,56 +90,14 @@ class _BusListScreenState extends State<BusListScreen> {
           children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.xl, 0, AppSpacing.xl, AppSpacing.md),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: SearchField(
-                      hint: 'Search bus or route',
-                      onChanged: (v) => setState(() => _query = v),
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.sm),
-                  GestureDetector(
-                    onTap: () async {
-                      final result = await showModalBottomSheet<FilterResult>(
-                        context: context,
-                        isScrollControlled: true,
-                        backgroundColor: Colors.transparent,
-                        builder: (_) => DestinationFilterSheet(
-                          initialDestination: _query,
-                          initialStatus: _activeFilter,
-                        ),
-                      );
-                      if (result != null) {
-                        setState(() {
-                          _query = result.destination;
-                          _activeFilter = result.status;
-                        });
-                        if (result.navigateToSelection) {
-                          if (!mounted) return;
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => FilteredBusSelectionScreen(
-                                stop: widget.stop,
-                                destination: result.destination,
-                              ),
-                            ),
-                          );
-                        }
-                      }
-                    },
-                    child: Container(
-                      width: 52,
-                      height: 52,
-                      decoration: BoxDecoration(
-                        color: AppColors.primaryContainer,
-                        borderRadius: BorderRadius.circular(AppSpacing.buttonRadius),
-                      ),
-                      child: const Icon(Icons.tune, color: AppColors.primary),
-                    ),
-                  ),
-                ],
+                AppSpacing.xl,
+                0,
+                AppSpacing.xl,
+                AppSpacing.md,
+              ),
+              child: SearchField(
+                hint: 'Search bus or route',
+                onChanged: (v) => setState(() => _query = v),
               ),
             ),
             _FilterChips(
@@ -144,19 +111,29 @@ class _BusListScreenState extends State<BusListScreen> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.directions_bus_outlined,
-                              size: 64, color: AppColors.outline.withOpacity(0.4)),
+                          Icon(
+                            Icons.directions_bus_outlined,
+                            size: 64,
+                            color: AppColors.outline.withOpacity(0.4),
+                          ),
                           const SizedBox(height: AppSpacing.md),
-                          Text('No buses match',
-                              style: GoogleFonts.manrope(color: AppColors.outline)),
+                          Text(
+                            'No buses match',
+                            style: GoogleFonts.plusJakartaSans(color: AppColors.outline),
+                          ),
                         ],
                       ),
                     )
                   : ListView.separated(
                       padding: const EdgeInsets.fromLTRB(
-                          AppSpacing.xl, 0, AppSpacing.xl, AppSpacing.xl),
+                        AppSpacing.xl,
+                        0,
+                        AppSpacing.xl,
+                        AppSpacing.xl,
+                      ),
                       itemCount: _buses.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.sm),
+                      separatorBuilder: (_, __) =>
+                          const SizedBox(height: AppSpacing.sm),
                       itemBuilder: (_, i) => BusTile(bus: _buses[i]),
                     ),
             ),
@@ -181,7 +158,9 @@ class BusTile extends StatelessWidget {
 
     return AppCard(
       onTap: () => Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => LiveTrackingScreen(busId: bus.id)),
+        MaterialPageRoute<void>(
+          builder: (_) => LiveTrackingScreen(busId: bus.id),
+        ),
       ),
       borderColor: highlight ? AppColors.primary.withOpacity(0.5) : null,
       padding: const EdgeInsets.all(AppSpacing.md),
@@ -196,37 +175,53 @@ class BusTile extends StatelessWidget {
                 Row(
                   children: [
                     Expanded(
-                      child: Text(route.name,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: GoogleFonts.spaceGrotesk(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.onSurface)),
+                      child: Text(
+                        route.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.onSurface,
+                        ),
+                      ),
                     ),
                     StatusChip(status: status, dense: true),
                   ],
                 ),
                 const SizedBox(height: 4),
-                Text('${route.origin}  →  ${route.destination}',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.manrope(fontSize: 12, color: AppColors.outline)),
+                Text(
+                  '${route.origin}  →  ${route.destination}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 12,
+                    color: AppColors.outline,
+                  ),
+                ),
                 const SizedBox(height: AppSpacing.sm),
                 Row(
                   children: [
-                    const Icon(Icons.schedule, size: 14, color: AppColors.outline),
+                    Icon(Icons.schedule, size: 14, color: AppColors.outline),
                     const SizedBox(width: 4),
-                    Text('${pos.etaMinutes} min',
-                        style: GoogleFonts.manrope(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.onSurface)),
+                    Text(
+                      '${pos.etaMinutes} min',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.onSurface,
+                      ),
+                    ),
                     const SizedBox(width: AppSpacing.md),
-                    const Icon(Icons.tag, size: 14, color: AppColors.outline),
+                    Icon(Icons.tag, size: 14, color: AppColors.outline),
                     const SizedBox(width: 4),
-                    Text(bus.number,
-                        style: GoogleFonts.manrope(fontSize: 13, color: AppColors.onSurfaceVariant)),
+                    Text(
+                      bus.number,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 13,
+                        color: AppColors.onSurfaceVariant,
+                      ),
+                    ),
                   ],
                 ),
               ],
@@ -273,18 +268,27 @@ class _FilterChips extends StatelessWidget {
           return GestureDetector(
             onTap: () => onChanged(f),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.sm),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.lg,
+                vertical: AppSpacing.sm,
+              ),
               decoration: BoxDecoration(
-                color: selected ? AppColors.primaryContainer : AppColors.surfaceContainerHighest,
+                color: selected
+                    ? AppColors.secondaryContainer.withOpacity(0.55)
+                    : AppColors.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(AppSpacing.pillRadius),
               ),
               child: Center(
-                child: Text(f,
-                    style: GoogleFonts.manrope(
-                      color: selected ? AppColors.primaryFixed : AppColors.onSurfaceVariant,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 13,
-                    )),
+                child: Text(
+                  f,
+                  style: GoogleFonts.plusJakartaSans(
+                    color: selected
+                        ? AppColors.onSecondaryContainer
+                        : AppColors.onSurfaceVariant,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                  ),
+                ),
               ),
             ),
           );

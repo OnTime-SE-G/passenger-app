@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
 
-/// Dark surface card with subtle white border and ambient shadow.
+/// Surface card with soft border and diffuse shadow.
 class AppCard extends StatelessWidget {
   const AppCard({
     super.key,
@@ -34,10 +34,11 @@ class AppCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
           child: Ink(
             decoration: BoxDecoration(
-              color: color ?? AppColors.surfaceContainerLow,
+              color: color ?? AppColors.surfaceContainerLowest,
               borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
               border: Border.all(
-                color: borderColor ?? Colors.white.withOpacity(0.05),
+                color: borderColor ??
+                    AppColors.outlineVariant.withOpacity(0.45),
               ),
             ),
             padding: padding,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'screens/splash_screen.dart';
+import 'theme/app_colors.dart';
 import 'theme/app_theme.dart';
 
 void main() {
@@ -9,8 +10,9 @@ void main() {
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.light,
-      systemNavigationBarColor: Color(0xFF11131C),
+      statusBarIconBrightness: Brightness.dark,
+      systemNavigationBarColor: AppColors.surface,
+      systemNavigationBarIconBrightness: Brightness.dark,
     ),
   );
   runApp(const PassengerApp());

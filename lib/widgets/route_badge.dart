@@ -4,7 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
 
-/// Route number badge — dark surface-bright background with indigo text.
+/// Route number badge — rounded capsule with optional emphasis.
 class RouteBadge extends StatelessWidget {
   const RouteBadge({
     super.key,
@@ -25,15 +25,16 @@ class RouteBadge extends StatelessWidget {
         vertical: featured ? AppSpacing.md : AppSpacing.sm,
       ),
       decoration: BoxDecoration(
-        color: featured ? AppColors.primary : AppColors.surfaceBright,
+        color: featured
+            ? AppColors.primary
+            : AppColors.primary.withOpacity(0.12),
         borderRadius: BorderRadius.circular(AppSpacing.md),
-        border: Border.all(color: AppColors.outlineVariant.withOpacity(0.2)),
       ),
       child: Text(
         code,
-        style: GoogleFonts.spaceGrotesk(
+        style: GoogleFonts.plusJakartaSans(
           color: featured ? AppColors.onPrimary : AppColors.primary,
-          fontWeight: FontWeight.w900,
+          fontWeight: FontWeight.w800,
           fontSize: featured ? 28 : size * 0.36,
           letterSpacing: -0.5,
         ),

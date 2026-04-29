@@ -23,18 +23,18 @@ extension BusStatusX on BusStatus {
   Color get color {
     switch (this) {
       case BusStatus.onTime:
-        return AppColors.secondary;
+        return AppColors.success;
       case BusStatus.delayed:
-        return AppColors.error;
+        return AppColors.errorBright;
       case BusStatus.arriving:
-        return AppColors.secondary;
+        return AppColors.primary;
       case BusStatus.cancelled:
         return AppColors.outline;
     }
   }
 }
 
-/// Pill-shaped status chip with pulsing dot. Matches Signal Flux reference.
+/// Pill-shaped status chip with pulsing dot.
 class StatusChip extends StatelessWidget {
   const StatusChip({super.key, required this.status, this.dense = false});
 
@@ -60,7 +60,7 @@ class StatusChip extends StatelessWidget {
           SizedBox(width: dense ? 4 : 6),
           Text(
             status.label,
-            style: GoogleFonts.manrope(
+            style: GoogleFonts.plusJakartaSans(
               fontSize: dense ? 9 : 10,
               fontWeight: FontWeight.w800,
               color: status.color,

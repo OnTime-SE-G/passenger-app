@@ -2,9 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../theme/app_colors.dart';
-import '../theme/app_spacing.dart';
 
-/// Reusable search field — dark surface-container-low background, no border.
+/// Search field — neutral fill, rounded, theme-driven.
 class SearchField extends StatelessWidget {
   const SearchField({
     super.key,
@@ -40,13 +39,13 @@ class SearchField extends StatelessWidget {
       autofocus: autofocus,
       readOnly: readOnly,
       onTap: onTap,
-      style: GoogleFonts.manrope(color: AppColors.onSurface, fontSize: 14),
+      style: GoogleFonts.plusJakartaSans(color: AppColors.onSurface, fontSize: 14),
       decoration: InputDecoration(
         hintText: hint,
         prefixIcon: Icon(leading, color: AppColors.onSurfaceVariant, size: 20),
         suffixIcon: trailing != null
             ? IconButton(
-                icon: Icon(trailing, color: AppColors.secondary, size: 20),
+                icon: Icon(trailing, color: AppColors.primary, size: 20),
                 onPressed: onTrailingTap,
               )
             : null,

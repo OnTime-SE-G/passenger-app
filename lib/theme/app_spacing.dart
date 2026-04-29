@@ -10,8 +10,9 @@ class AppSpacing {
   static const double xxl = 32;
   static const double xxxl = 48;
 
-  static const double cardRadius = 16;
-  static const double buttonRadius = 16;
-  static const double sheetRadius = 32;
+  /// Softer, app-like corners (lighter UI).
+  static const double cardRadius = 20;
+  static const double buttonRadius = 14;
+  static const double sheetRadius = 28;
   static const double pillRadius = 999;
 }

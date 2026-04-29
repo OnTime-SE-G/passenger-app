@@ -4,7 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
 
-/// Gradient primary CTA button matching Signal Flux style.
+/// Primary CTA — teal → mint gradient; white label.
 class PrimaryButton extends StatelessWidget {
   const PrimaryButton({
     super.key,
@@ -27,9 +27,21 @@ class PrimaryButton extends StatelessWidget {
       child: DecoratedBox(
         decoration: BoxDecoration(
           gradient: const LinearGradient(
-            colors: [AppColors.primary, AppColors.primaryFixedDim],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              AppColors.primary,
+              AppColors.primaryFixedDim,
+            ],
           ),
           borderRadius: BorderRadius.circular(AppSpacing.buttonRadius),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primary.withOpacity(0.28),
+              blurRadius: 16,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: ElevatedButton(
           onPressed: loading ? null : onPressed,
@@ -51,14 +63,14 @@ class PrimaryButton extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      label.toUpperCase(),
-                      style: GoogleFonts.spaceGrotesk(
+                      label,
+                      style: GoogleFonts.plusJakartaSans(
                         fontWeight: FontWeight.w700,
-                        letterSpacing: 1,
+                        fontSize: 16,
                       ),
                     ),
                     if (icon != null) ...[
-                      const SizedBox(width: AppSpacing.md),
+                      const SizedBox(width: AppSpacing.sm),
                       Icon(icon, size: 20),
                     ],
                   ],
@@ -69,7 +81,6 @@ class PrimaryButton extends StatelessWidget {
   }
 }
 
-/// Outlined secondary button.
 class SecondaryButton extends StatelessWidget {
   const SecondaryButton({
     super.key,
@@ -86,16 +97,25 @@ class SecondaryButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       width: double.infinity,
+      height: 48,
       child: OutlinedButton(
         onPressed: onPressed,
+        style: OutlinedButton.styleFrom(
+          foregroundColor: AppColors.onSurfaceVariant,
+          backgroundColor: AppColors.surfaceContainerHigh,
+          side: BorderSide.none,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppSpacing.buttonRadius),
+          ),
+        ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             if (icon != null) ...[
-              Icon(icon, size: 20, color: AppColors.onSurfaceVariant),
+              Icon(icon, size: 18, color: AppColors.onSurfaceVariant),
               const SizedBox(width: AppSpacing.sm),
             ],
-            Text(label.toUpperCase()),
+            Text(label, style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600)),
           ],
         ),
       ),

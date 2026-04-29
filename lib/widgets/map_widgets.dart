@@ -4,7 +4,7 @@ import 'package:latlong2/latlong.dart';
 
 import '../theme/app_colors.dart';
 
-/// Dark-themed CARTO tiles (Dark Matter).
+/// Light basemap — Carto Voyager (map stays readable while app chrome stays dark).
 class AppMapTiles extends StatelessWidget {
   const AppMapTiles({super.key});
 
@@ -12,7 +12,7 @@ class AppMapTiles extends StatelessWidget {
   Widget build(BuildContext context) {
     return TileLayer(
       urlTemplate:
-          'https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+          'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
       retinaMode: MediaQuery.of(context).devicePixelRatio > 1.5,
       userAgentPackageName: 'com.ontime.passenger_app',
       subdomains: const ['a', 'b', 'c', 'd'],
@@ -20,7 +20,7 @@ class AppMapTiles extends StatelessWidget {
   }
 }
 
-/// Pulsing cyan dot for user location.
+/// User dot — blue fill + white ring (see web home map marker).
 class UserLocationMarker extends StatefulWidget {
   const UserLocationMarker({super.key});
 
@@ -62,22 +62,22 @@ class _UserLocationMarkerState extends State<UserLocationMarker>
                 width: 36 + 28 * t,
                 height: 36 + 28 * t,
                 decoration: BoxDecoration(
-                  color: AppColors.secondary.withOpacity(0.25),
+                  color: AppColors.primary.withOpacity(0.18),
                   shape: BoxShape.circle,
                 ),
               ),
             ),
             Container(
-              width: 14,
-              height: 14,
+              width: 16,
+              height: 16,
               decoration: BoxDecoration(
-                color: AppColors.secondary,
+                color: AppColors.primary,
                 shape: BoxShape.circle,
-                border: Border.all(color: AppColors.background, width: 2),
+                border: Border.all(color: Colors.white, width: 3),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.secondary.withOpacity(0.4),
-                    blurRadius: 15,
+                    color: AppColors.primary.withOpacity(0.35),
+                    blurRadius: 12,
                   ),
                 ],
               ),
@@ -89,7 +89,7 @@ class _UserLocationMarkerState extends State<UserLocationMarker>
   }
 }
 
-/// Bus stop markers on the map.
+/// Bus stop markers — white dot + primary ring (web KML-style markers).
 class StopMarker extends StatelessWidget {
   const StopMarker({super.key, this.selected = false, this.passed = false});
   final bool selected;
@@ -97,28 +97,24 @@ class StopMarker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bg = passed
-        ? AppColors.routePassed
-        : selected
-            ? AppColors.secondary
-            : AppColors.surfaceBright;
-    final border = passed ? AppColors.routePassed : AppColors.secondary;
+    final bg = passed ? AppColors.routePassed : Colors.white;
+    final ring = passed ? AppColors.routePassed : AppColors.primary;
     return Container(
-      width: 24,
-      height: 24,
+      width: 22,
+      height: 22,
       decoration: BoxDecoration(
         color: bg,
         shape: BoxShape.circle,
-        border: Border.all(color: border, width: 3),
+        border: Border.all(color: ring, width: selected ? 3 : 2.5),
         boxShadow: [
-          BoxShadow(color: AppColors.secondary.withOpacity(0.3), blurRadius: 8),
+          BoxShadow(color: AppColors.primary.withOpacity(0.28), blurRadius: 4),
         ],
       ),
     );
   }
 }
 
-/// Glowing cyan bus marker with pulse ring.
+/// Live bus marker — circular badge using route accent (`route.color` on web).
 class LiveBusMarker extends StatefulWidget {
   const LiveBusMarker({super.key, this.heading = 0});
   final double heading;
@@ -155,33 +151,37 @@ class _LiveBusMarkerState extends State<LiveBusMarker>
           alignment: Alignment.center,
           children: [
             Opacity(
-              opacity: (1 - _c.value).clamp(0.0, 0.5),
+              opacity: (1 - _c.value).clamp(0.0, 0.45),
               child: Container(
                 width: 56 * _c.value,
                 height: 56 * _c.value,
                 decoration: BoxDecoration(
-                  color: AppColors.secondary.withOpacity(0.2),
+                  color: AppColors.primary.withOpacity(0.18),
                   shape: BoxShape.circle,
                 ),
               ),
             ),
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: AppColors.secondaryContainer,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.secondary.withOpacity(0.4),
-                    blurRadius: 15,
-                  ),
-                ],
-              ),
-              child: const Icon(
-                Icons.directions_bus,
-                color: Colors.white,
-                size: 22,
+            Transform.rotate(
+              angle: widget.heading * 3.14159265359 / 180,
+              child: Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: AppColors.primaryContainer,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.22),
+                      blurRadius: 10,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  Icons.directions_bus,
+                  color: Colors.white,
+                  size: 22,
+                ),
               ),
             ),
           ],
@@ -191,7 +191,6 @@ class _LiveBusMarkerState extends State<LiveBusMarker>
   }
 }
 
-/// Quick helper to build a FlutterMap.
 FlutterMap buildMap({
   required MapController controller,
   required LatLng center,

@@ -14,53 +14,50 @@ class AppTheme {
 
     return ThemeData(
       useMaterial3: true,
-      brightness: Brightness.dark,
+      brightness: Brightness.light,
       scaffoldBackgroundColor: AppColors.background,
-      colorScheme: const ColorScheme.dark(
+      colorScheme: ColorScheme.light(
         primary: AppColors.primary,
         onPrimary: AppColors.onPrimary,
         primaryContainer: AppColors.primaryContainer,
         secondary: AppColors.secondary,
-        onSecondary: Color(0xFF00363E),
-        error: AppColors.error,
+        onSecondary: AppColors.onPrimary,
         surface: AppColors.surface,
         onSurface: AppColors.onSurface,
+        error: AppColors.errorBright,
+        outline: AppColors.outline,
       ),
       textTheme: textTheme,
       appBarTheme: AppBarTheme(
-        backgroundColor: Colors.transparent,
-        foregroundColor: AppColors.primary,
+        backgroundColor: AppColors.surface.withOpacity(0.94),
+        foregroundColor: AppColors.onSurface,
         elevation: 0,
         scrolledUnderElevation: 0,
+        surfaceTintColor: Colors.transparent,
         centerTitle: false,
-        systemOverlayStyle: SystemUiOverlayStyle.light,
-        titleTextStyle: GoogleFonts.spaceGrotesk(
-          fontSize: 20,
-          fontWeight: FontWeight.w900,
-          color: AppColors.primary,
-          letterSpacing: 3,
+        systemOverlayStyle: SystemUiOverlayStyle.dark,
+        titleTextStyle: GoogleFonts.plusJakartaSans(
+          fontSize: 18,
+          fontWeight: FontWeight.w700,
+          letterSpacing: -0.02,
+          color: AppColors.onSurface,
         ),
       ),
       cardTheme: CardThemeData(
-        color: AppColors.surfaceContainerHigh,
+        color: AppColors.surfaceContainerLowest,
         elevation: 0,
+        shadowColor: const Color(0x14000000),
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
-          side: BorderSide(color: Colors.white.withOpacity(0.05)),
         ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primaryContainer,
-          foregroundColor: AppColors.primaryFixed,
           elevation: 0,
           minimumSize: const Size.fromHeight(52),
-          textStyle: GoogleFonts.spaceGrotesk(
-            fontSize: 14,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 1.5,
-          ),
+          textStyle:
+              GoogleFonts.plusJakartaSans(fontSize: 16, fontWeight: FontWeight.w700),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppSpacing.buttonRadius),
           ),
@@ -69,13 +66,11 @@ class AppTheme {
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: AppColors.onSurfaceVariant,
-          minimumSize: const Size.fromHeight(52),
-          side: BorderSide(color: AppColors.outlineVariant.withOpacity(0.3)),
-          textStyle: GoogleFonts.manrope(
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 1.5,
-          ),
+          minimumSize: const Size.fromHeight(44),
+          side: BorderSide.none,
+          backgroundColor: AppColors.surfaceContainerHigh,
+          textStyle:
+              GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w600),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppSpacing.buttonRadius),
           ),
@@ -83,12 +78,13 @@ class AppTheme {
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: AppColors.surfaceContainerLow,
+        fillColor: AppColors.surfaceDim,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.lg,
-          vertical: AppSpacing.lg,
+          vertical: AppSpacing.md,
         ),
-        hintStyle: GoogleFonts.manrope(color: AppColors.outline, fontSize: 14),
+        hintStyle:
+            GoogleFonts.plusJakartaSans(color: AppColors.outline, fontSize: 14),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppSpacing.buttonRadius),
           borderSide: BorderSide.none,
@@ -99,41 +95,47 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppSpacing.buttonRadius),
-          borderSide: BorderSide(color: AppColors.secondary.withOpacity(0.3), width: 1.5),
+          borderSide: const BorderSide(color: AppColors.primary, width: 2),
         ),
       ),
       dividerTheme: DividerThemeData(
-        color: AppColors.outlineVariant.withOpacity(0.3),
+        color: AppColors.outlineVariant.withOpacity(0.85),
         thickness: 1,
-        space: 1,
       ),
-      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-        backgroundColor: Colors.transparent,
-        selectedItemColor: AppColors.secondary,
-        unselectedItemColor: AppColors.onSurfaceVariant,
+      bottomNavigationBarTheme: BottomNavigationBarThemeData(
+        backgroundColor: Colors.white.withOpacity(0.94),
+        selectedItemColor: AppColors.primary,
+        unselectedItemColor: AppColors.navInactive,
+        type: BottomNavigationBarType.fixed,
+        elevation: 0,
       ),
     );
   }
 }
 
-/// Ambient shadow for floating cards.
-const List<BoxShadow> kCardShadow = [
+/// Soft diffuse shadow for elevated surfaces on light backgrounds.
+const List<BoxShadow> kAmbientShadow = [
   BoxShadow(
-    color: Color(0x33000000),
-    blurRadius: 16,
-    offset: Offset(0, 8),
+    color: Color(0x14000000),
+    blurRadius: 32,
+    offset: Offset(0, 12),
+    spreadRadius: -8,
   ),
 ];
 
-/// Glass panel decoration.
-BoxDecoration glassDecoration({
-  double opacity = 0.6,
-  double blur = 20,
-  double borderRadius = 32,
-}) {
+/// Frosted panel on maps / overlays — reads lighter than heavy glass.
+BoxDecoration glassPanelDecoration({double radius = 16}) {
   return BoxDecoration(
-    color: AppColors.surfaceContainerHighest.withOpacity(opacity),
-    borderRadius: BorderRadius.circular(borderRadius),
-    border: Border.all(color: Colors.white.withOpacity(0.05)),
+    color: Colors.white.withOpacity(0.94),
+    borderRadius: BorderRadius.circular(radius),
+    border: Border.all(color: AppColors.outlineVariant.withOpacity(0.95)),
+    boxShadow: const [
+      BoxShadow(
+        color: Color(0x12000000),
+        blurRadius: 28,
+        offset: Offset(0, 12),
+        spreadRadius: -6,
+      ),
+    ],
   );
 }

@@ -11,7 +11,7 @@ import '../widgets/primary_button.dart';
 import '../widgets/route_badge.dart';
 import 'bus_list_screen.dart';
 
-/// Screen 3 — Bus stop details (dark theme).
+/// Bus stop details — routes + departure actions.
 class StopDetailsScreen extends StatelessWidget {
   const StopDetailsScreen({super.key, required this.stop});
   final BusStop stop;
@@ -28,7 +28,7 @@ class StopDetailsScreen extends StatelessWidget {
           onPressed: () => Navigator.of(context).maybePop(),
         ),
         title: Text('Stop Details',
-            style: GoogleFonts.spaceGrotesk(
+            style: GoogleFonts.plusJakartaSans(
               fontWeight: FontWeight.w700,
               fontSize: 18,
               color: AppColors.onSurface,
@@ -63,7 +63,7 @@ class StopDetailsScreen extends StatelessWidget {
                               Text(stop.name, style: AppTypography.headline(20)),
                               const SizedBox(height: 2),
                               Text(stop.address,
-                                  style: GoogleFonts.manrope(fontSize: 13, color: AppColors.onSurfaceVariant)),
+                                  style: GoogleFonts.plusJakartaSans(fontSize: 13, color: AppColors.onSurfaceVariant)),
                             ],
                           ),
                         ),
@@ -74,7 +74,7 @@ class StopDetailsScreen extends StatelessWidget {
                     const SizedBox(height: AppSpacing.xl),
                     Text(
                       'ROUTES SERVING THIS STOP',
-                      style: GoogleFonts.manrope(
+                      style: GoogleFonts.plusJakartaSans(
                         fontSize: 10,
                         fontWeight: FontWeight.w800,
                         color: AppColors.onSurfaceVariant,
@@ -95,7 +95,7 @@ class StopDetailsScreen extends StatelessWidget {
                                     Text(r.name, style: AppTypography.headline(16)),
                                     const SizedBox(height: 2),
                                     Text('${r.origin}  →  ${r.destination}',
-                                        style: GoogleFonts.manrope(
+                                        style: GoogleFonts.plusJakartaSans(
                                             fontSize: 13, color: AppColors.onSurfaceVariant)),
                                   ],
                                 ),

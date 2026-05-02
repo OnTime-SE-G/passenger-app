@@ -7,7 +7,6 @@ import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_theme.dart';
 import '../theme/app_typography.dart';
-import '../widgets/global_app_bar.dart';
 import '../widgets/ontime_logo.dart';
 import 'live_tracking_screen.dart';
 
@@ -22,9 +21,7 @@ class NearbyBusRoutesScreen extends StatefulWidget {
 class _NearbyBusRoutesScreenState extends State<NearbyBusRoutesScreen> {
   final _repo = DemoRepository.instance;
   final _destinationFilter = TextEditingController();
-  final _routeSearchCtl = TextEditingController();
   int _sortOption = 0;
-  String _routeSearchQuery = '';
   static const _sortLabels = ['Shortest ETA', 'Distance', 'Route Number'];
 
   static const _serviceTypes = [
@@ -39,7 +36,6 @@ class _NearbyBusRoutesScreenState extends State<NearbyBusRoutesScreen> {
   @override
   void dispose() {
     _destinationFilter.dispose();
-    _routeSearchCtl.dispose();
     super.dispose();
   }
 
@@ -68,15 +64,6 @@ class _NearbyBusRoutesScreenState extends State<NearbyBusRoutesScreen> {
       );
     }
 
-    final routeQ = _routeSearchQuery.trim().toLowerCase();
-    if (routeQ.isNotEmpty) {
-      rows.retainWhere(
-        (r) =>
-            r.route.name.toLowerCase().contains(routeQ) ||
-            r.route.code.toLowerCase().contains(routeQ),
-      );
-    }
-
     rows.sort((a, b) {
       switch (_sortOption) {
         case 0:
@@ -102,59 +89,21 @@ class _NearbyBusRoutesScreenState extends State<NearbyBusRoutesScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Header: search field + global actions
-            Container(
-              color: AppColors.background,
+            Padding(
               padding: const EdgeInsets.fromLTRB(
                 AppSpacing.xl,
                 AppSpacing.sm,
-                AppSpacing.md,
+                AppSpacing.xl,
                 AppSpacing.sm,
               ),
               child: Row(
                 children: [
-                  Expanded(
-                    child: Container(
-                      height: 44,
-                      decoration: BoxDecoration(
-                        color: AppColors.surfaceContainerHighest,
-                        borderRadius: BorderRadius.circular(AppSpacing.buttonRadius),
-                      ),
-                      child: TextField(
-                        controller: _routeSearchCtl,
-                        onChanged: (v) => setState(() => _routeSearchQuery = v),
-                        decoration: InputDecoration(
-                          hintText: 'Search routes…',
-                          hintStyle: GoogleFonts.plusJakartaSans(
-                            fontSize: 14,
-                            color: AppColors.onSurfaceVariant,
-                          ),
-                          prefixIcon: const Icon(
-                            Icons.search,
-                            size: 20,
-                            color: AppColors.onSurfaceVariant,
-                          ),
-                          suffixIcon: _routeSearchQuery.isNotEmpty
-                              ? IconButton(
-                                  icon: const Icon(Icons.close, size: 18),
-                                  onPressed: () {
-                                    _routeSearchCtl.clear();
-                                    setState(() => _routeSearchQuery = '');
-                                  },
-                                )
-                              : null,
-                          border: InputBorder.none,
-                          isDense: true,
-                          contentPadding:
-                              const EdgeInsets.symmetric(vertical: 12),
-                        ),
-                      ),
-                    ),
-                  ),
-                  GlobalHeaderActions(
-                    onRefresh: () => setState(() {}),
-                    onNotifications: () {},
-                    onProfile: () {},
+                  const OnTimeLogo(size: OnTimeLogoSize.small),
+                  const Spacer(),
+                  IconButton(
+                    icon: const Icon(Icons.search),
+                    color: AppColors.navInactive,
+                    onPressed: () {},
                   ),
                 ],
               ),
@@ -183,29 +132,36 @@ class _NearbyBusRoutesScreenState extends State<NearbyBusRoutesScreen> {
                     style: AppTypography.body(15),
                   ),
                   const SizedBox(height: AppSpacing.lg),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: Wrap(
-                      spacing: 8,
-                      children: List.generate(_sortLabels.length, (i) {
-                        final sel = _sortOption == i;
-                        return ChoiceChip(
-                          label: Text(_sortLabels[i]),
-                          selected: sel,
-                          onSelected: (_) =>
-                              setState(() => _sortOption = i),
-                          selectedColor:
-                              AppColors.secondary.withOpacity(0.14),
-                          labelStyle: GoogleFonts.plusJakartaSans(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 13,
-                            color: sel ? AppColors.secondary : AppColors.onSurface,
+                  Row(
+                    children: List.generate(_sortLabels.length, (i) {
+                      final sel = _sortOption == i;
+                      return Expanded(
+                        child: Padding(
+                          padding: EdgeInsets.only(
+                            right: i < _sortLabels.length - 1 ? 6.0 : 0,
                           ),
-                          backgroundColor: AppColors.surfaceContainerHigh,
-                          side: BorderSide.none,
-                        );
-                      }),
-                    ),
+                          child: ChoiceChip(
+                            label: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(_sortLabels[i]),
+                            ),
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
+                            labelPadding: const EdgeInsets.symmetric(horizontal: 2),
+                            selected: sel,
+                            onSelected: (_) => setState(() => _sortOption = i),
+                            selectedColor: AppColors.secondary.withOpacity(0.14),
+                            showCheckmark: false,
+                            labelStyle: GoogleFonts.plusJakartaSans(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 13,
+                              color: sel ? AppColors.secondary : AppColors.onSurface,
+                            ),
+                            backgroundColor: AppColors.surfaceContainerHigh,
+                            side: BorderSide.none,
+                          ),
+                        ),
+                      );
+                    }),
                   ),
                   const SizedBox(height: AppSpacing.lg),
 
@@ -324,8 +280,8 @@ class _BusRouteCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            width: 64,
-            height: 64,
+            width: 52,
+            height: 52,
             alignment: Alignment.center,
             decoration: BoxDecoration(
               color: bgBadge,
@@ -342,29 +298,29 @@ class _BusRouteCard extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(width: AppSpacing.lg),
+          const SizedBox(width: AppSpacing.md),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                Text(
+                  row.route.name,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    height: 1.25,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 4,
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
-                    Expanded(
-                      child: Text(
-                        row.route.name,
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 17,
-                          fontWeight: FontWeight.w700,
-                          height: 1.25,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 4,
+                        horizontal: 8,
+                        vertical: 2,
                       ),
                       decoration: BoxDecoration(
                         color: row.delayed
@@ -385,11 +341,11 @@ class _BusRouteCard extends StatelessWidget {
                               shape: BoxShape.circle,
                             ),
                           ),
-                          const SizedBox(width: 6),
+                          const SizedBox(width: 4),
                           Text(
                             row.delayed ? 'Delayed' : 'Active',
                             style: GoogleFonts.plusJakartaSans(
-                              fontSize: 12,
+                              fontSize: 11,
                               fontWeight: FontWeight.w700,
                               color: row.delayed
                                   ? AppColors.errorBright
@@ -399,55 +355,33 @@ class _BusRouteCard extends StatelessWidget {
                         ],
                       ),
                     ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Icon(Icons.schedule,
-                        size: 16, color: AppColors.onSurfaceVariant),
-                    const SizedBox(width: 4),
-                    Text.rich(
-                      TextSpan(
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 14,
-                          color: AppColors.onSurfaceVariant,
-                        ),
-                        children: [
-                          const TextSpan(text: 'ETA: '),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.schedule,
+                            size: 14, color: AppColors.onSurfaceVariant),
+                        const SizedBox(width: 4),
+                        Text.rich(
                           TextSpan(
-                            text: '${row.etaMinutes} mins',
                             style: GoogleFonts.plusJakartaSans(
-                              fontWeight: FontWeight.w700,
-                              color: row.delayed
-                                  ? AppColors.errorBright
-                                  : AppColors.primary,
+                              fontSize: 12,
+                              color: AppColors.onSurfaceVariant,
                             ),
+                            children: [
+                              const TextSpan(text: 'ETA: '),
+                              TextSpan(
+                                text: '${row.etaMinutes} mins',
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontWeight: FontWeight.w700,
+                                  color: row.delayed
+                                      ? AppColors.errorBright
+                                      : AppColors.primary,
+                                ),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
-                    ),
-                    Container(
-                      width: 4,
-                      height: 4,
-                      margin: const EdgeInsets.symmetric(horizontal: 8),
-                      decoration: const BoxDecoration(
-                        color: AppColors.outlineVariant,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    Icon(Icons.directions_bus_outlined,
-                        size: 16, color: AppColors.onSurfaceVariant),
-                    const SizedBox(width: 4),
-                    Expanded(
-                      child: Text(
-                        row.serviceType,
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 14,
-                          color: AppColors.onSurfaceVariant,
                         ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
+                      ],
                     ),
                   ],
                 ),

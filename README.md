@@ -106,7 +106,7 @@ OnTimeLogoImage(width: 120)              // PNG asset version
 ## Running
 
 ```bash
-cd passenger_app
+cd passenger-app
 flutter pub get
 
 # Web (Chrome) — fastest for dev

@@ -254,21 +254,43 @@ class _SplashScreenState extends State<SplashScreen>
 
                 // Top Logo
                 Positioned(
-                  top: size.height * 0.35,
+                  top: size.height * 0.20,
                   left: 0,
                   right: 0,
                   child: Center(
                     child: Opacity(
                       opacity: t > 0.1 ? Curves.easeIn.transform(((t - 0.1) / 0.2).clamp(0.0, 1.0)) : 0.0,
                       child: Column(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
-                            'Your City. On Time.',
+                            'Your City.',
                             style: GoogleFonts.plusJakartaSans(
-                              fontSize: 18,
+                              fontSize: 16,
                               fontWeight: FontWeight.w600,
-                              color: AppColors.primary,
-                              letterSpacing: 0.5,
+                              color: const Color(0xFF64748B),
+                              letterSpacing: 1.2,
+                              height: 1.1,
+                            ),
+                          ),
+                          Text(
+                            'On Time',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 52,
+                              fontWeight: FontWeight.w900,
+                              color: const Color(0xFF2563EB),
+                              letterSpacing: -1.0,
+                              height: 1.0,
+                            ),
+                          ),
+                          Text(
+                            'PUBLIC TRANSPORT',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: const Color(0xFF94A3B8),
+                              letterSpacing: 2.0,
+                              height: 1.1,
                             ),
                           ),
                         ],

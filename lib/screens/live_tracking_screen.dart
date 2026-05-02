@@ -151,26 +151,32 @@ class _LiveTrackingScreenState extends State<LiveTrackingScreen> {
                 ),
               ),
 
-              // Glass panel — web `/tracking` sidebar (top-left).
-              Positioned(
-                left: AppSpacing.md,
-                top: MediaQuery.of(context).padding.top + 60,
-                width: (MediaQuery.of(context).size.width - AppSpacing.md * 2)
-                    .clamp(0.0, 380.0),
-                bottom: MediaQuery.of(context).padding.bottom + 88,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(AppSpacing.sheetRadius),
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-                    child: Container(
-                      decoration: glassPanelDecoration(
-                        radius: AppSpacing.sheetRadius,
-                      ),
-                      child: SingleChildScrollView(
-                        padding: const EdgeInsets.all(AppSpacing.lg),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
+              // Glass panel — expandable bottom sheet on mobile, fixed width on web.
+              Align(
+                alignment: Alignment.bottomCenter,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 420),
+                  child: DraggableScrollableSheet(
+                    initialChildSize: 0.35,
+                    minChildSize: 0.15,
+                    maxChildSize: 0.85,
+                    builder: (context, scrollController) {
+                      return Container(
+                        margin: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+                        child: ClipRRect(
+                          borderRadius: const BorderRadius.vertical(top: Radius.circular(AppSpacing.sheetRadius)),
+                          child: BackdropFilter(
+                            filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                            child: Container(
+                              decoration: glassPanelDecoration(
+                                radius: AppSpacing.sheetRadius,
+                              ),
+                              child: SingleChildScrollView(
+                                controller: scrollController,
+                                padding: const EdgeInsets.all(AppSpacing.lg),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                                  children: [
                             Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
@@ -283,18 +289,12 @@ class _LiveTrackingScreenState extends State<LiveTrackingScreen> {
                             ...List.generate(route.stopIds.length, (i) {
                               final stop = _repo.stopById(route.stopIds[i]);
                               final st = _stopState(i, pos.nextStopIndex);
-                              // Per-stop minute ETA for upcoming stops
-                              final stopsRemaining = i - pos.nextStopIndex;
-                              final etaHint = st == _StopLeg.upcoming && stopsRemaining > 0
-                                  ? '~${(stopsRemaining * 3 + pos.etaMinutes ~/ 2).clamp(1, 60)} min'
-                                  : null;
                               return Padding(
                                 padding: const EdgeInsets.only(bottom: 8),
                                 child: _StopListTile(
                                   stopName: stop.name,
                                   state: st,
                                   accent: route.accentColor,
-                                  etaHint: etaHint,
                                 ),
                               );
                             }),
@@ -304,50 +304,11 @@ class _LiveTrackingScreenState extends State<LiveTrackingScreen> {
                     ),
                   ),
                 ),
-              ),
-
-              // Zoom +/- controls (top-right)
-              Positioned(
-                top: MediaQuery.of(context).padding.top + 64,
-                right: AppSpacing.md,
-                child: Column(
-                  children: [
-                    _ZoomBtn(
-                      icon: Icons.add,
-                      onTap: () => _mapCtl.move(
-                          _mapCtl.camera.center, _mapCtl.camera.zoom + 1),
-                    ),
-                    const SizedBox(height: 4),
-                    _ZoomBtn(
-                      icon: Icons.remove,
-                      onTap: () => _mapCtl.move(
-                          _mapCtl.camera.center, _mapCtl.camera.zoom - 1),
-                    ),
-                  ],
-                ),
-              ),
-
-              // Scale bar (bottom-left)
-              Positioned(
-                left: AppSpacing.md,
-                bottom: MediaQuery.of(context).padding.bottom + 96,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.85),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Text(
-                    '300 m',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black87,
-                    ),
-                  ),
-                ),
-              ),
+              );
+            },
+          ),
+        ),
+      ),
             ],
           );
         },
@@ -465,20 +426,18 @@ class _StopListTile extends StatelessWidget {
     required this.stopName,
     required this.state,
     required this.accent,
-    this.etaHint,
   });
 
   final String stopName;
   final _StopLeg state;
   final Color accent;
-  final String? etaHint;
 
   @override
   Widget build(BuildContext context) {
     final subtitle = switch (state) {
       _StopLeg.passed => 'Passed',
       _StopLeg.current => 'Next stop',
-      _StopLeg.upcoming => etaHint ?? 'Scheduled',
+      _StopLeg.upcoming => 'Scheduled',
     };
 
     return Container(
@@ -565,32 +524,5 @@ extension BusRouteTrackingColors on BusRoute {
       default:
         return AppColors.primaryContainer;
     }
-  }
-}
-
-class _ZoomBtn extends StatelessWidget {
-  const _ZoomBtn({required this.icon, required this.onTap});
-  final IconData icon;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 36,
-        height: 36,
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.9),
-          borderRadius: BorderRadius.circular(8),
-          boxShadow: [
-            BoxShadow(
-                color: Colors.black.withOpacity(0.12), blurRadius: 8),
-          ],
-        ),
-        alignment: Alignment.center,
-        child: Icon(icon, size: 18, color: Colors.black87),
-      ),
-    );
   }
 }

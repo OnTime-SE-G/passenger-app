@@ -128,4 +128,3 @@ class RecentTrip {
     required this.at,
   });
 }
-

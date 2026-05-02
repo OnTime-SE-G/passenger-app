@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../data/demo_repository.dart';
+import '../services/app_tab_controller.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
 import 'alerts_screen.dart';
@@ -22,7 +23,7 @@ class AppShell extends StatefulWidget {
 }
 
 class _AppShellState extends State<AppShell> {
-  int _index = 0;
+  final _ctrl = AppTabController.instance;
 
   static const _tabs = [
     _Tab(icon: Icons.search_rounded, activeIcon: Icons.search_rounded, label: 'Search'),
@@ -33,22 +34,29 @@ class _AppShellState extends State<AppShell> {
     _Tab(icon: Icons.person_outline_rounded, activeIcon: Icons.person_rounded, label: 'Profile'),
   ];
 
+  @override
+  void initState() {
+    super.initState();
+    _ctrl.addListener(_onTabChange);
+  }
+
+  @override
+  void dispose() {
+    _ctrl.removeListener(_onTabChange);
+    super.dispose();
+  }
+
+  void _onTabChange() => setState(() {});
+
   Widget _pageForIndex() {
-    switch (_index) {
-      case 0:
-        return const PassengerSearchHomeScreen();
-      case 1:
-        return const NearbyStopsScreen();
-      case 2:
-        return const NearbyBusRoutesScreen();
-      case 3:
-        return const LiveMapPlaceholder();
-      case 4:
-        return const AlertsScreen();
-      case 5:
-        return const ProfileScreen();
-      default:
-        return const PassengerSearchHomeScreen();
+    switch (_ctrl.index) {
+      case 0: return const PassengerSearchHomeScreen();
+      case 1: return const NearbyStopsScreen();
+      case 2: return const NearbyBusRoutesScreen();
+      case 3: return const LiveMapPlaceholder();
+      case 4: return const AlertsScreen();
+      case 5: return const ProfileScreen();
+      default: return const PassengerSearchHomeScreen();
     }
   }
 
@@ -58,9 +66,9 @@ class _AppShellState extends State<AppShell> {
       extendBody: true,
       body: _pageForIndex(),
       bottomNavigationBar: _BottomNav(
-        currentIndex: _index,
+        currentIndex: _ctrl.index,
         tabs: _tabs,
-        onTap: (i) => setState(() => _index = i),
+        onTap: (i) => _ctrl.jumpTo(i),
         alertCount: DemoRepository.instance.alerts.length,
       ),
     );

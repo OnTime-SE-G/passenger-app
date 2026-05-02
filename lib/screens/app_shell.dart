@@ -5,10 +5,12 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
+import 'alerts_screen.dart';
 import 'live_tracking_screen.dart';
 import 'nearby_bus_routes_screen.dart';
 import 'nearby_stops_screen.dart';
 import 'passenger_search_home_screen.dart';
+import 'profile_screen.dart';
 
 /// Main shell — floating pill nav with blur (distinct mobile chrome).
 class AppShell extends StatefulWidget {
@@ -42,6 +44,16 @@ class _AppShellState extends State<AppShell> {
       activeIcon: Icons.map_rounded,
       label: 'Live',
     ),
+    _Tab(
+      icon: Icons.notifications_outlined,
+      activeIcon: Icons.notifications_rounded,
+      label: 'Alerts',
+    ),
+    _Tab(
+      icon: Icons.person_outline_rounded,
+      activeIcon: Icons.person_rounded,
+      label: 'Profile',
+    ),
   ];
 
   Widget _pageForIndex() {
@@ -54,6 +66,10 @@ class _AppShellState extends State<AppShell> {
         return const NearbyBusRoutesScreen();
       case 3:
         return const LiveMapPlaceholder();
+      case 4:
+        return const AlertsScreen();
+      case 5:
+        return const ProfileScreen();
       default:
         return const PassengerSearchHomeScreen();
     }

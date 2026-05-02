@@ -283,18 +283,67 @@ class _LiveTrackingScreenState extends State<LiveTrackingScreen> {
                             ...List.generate(route.stopIds.length, (i) {
                               final stop = _repo.stopById(route.stopIds[i]);
                               final st = _stopState(i, pos.nextStopIndex);
+                              // Per-stop minute ETA for upcoming stops
+                              final stopsRemaining = i - pos.nextStopIndex;
+                              final etaHint = st == _StopLeg.upcoming && stopsRemaining > 0
+                                  ? '~${(stopsRemaining * 3 + pos.etaMinutes ~/ 2).clamp(1, 60)} min'
+                                  : null;
                               return Padding(
                                 padding: const EdgeInsets.only(bottom: 8),
                                 child: _StopListTile(
                                   stopName: stop.name,
                                   state: st,
                                   accent: route.accentColor,
+                                  etaHint: etaHint,
                                 ),
                               );
                             }),
                           ],
                         ),
                       ),
+                    ),
+                  ),
+                ),
+              ),
+
+              // Zoom +/- controls (top-right)
+              Positioned(
+                top: MediaQuery.of(context).padding.top + 64,
+                right: AppSpacing.md,
+                child: Column(
+                  children: [
+                    _ZoomBtn(
+                      icon: Icons.add,
+                      onTap: () => _mapCtl.move(
+                          _mapCtl.camera.center, _mapCtl.camera.zoom + 1),
+                    ),
+                    const SizedBox(height: 4),
+                    _ZoomBtn(
+                      icon: Icons.remove,
+                      onTap: () => _mapCtl.move(
+                          _mapCtl.camera.center, _mapCtl.camera.zoom - 1),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Scale bar (bottom-left)
+              Positioned(
+                left: AppSpacing.md,
+                bottom: MediaQuery.of(context).padding.bottom + 96,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.85),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    '300 m',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black87,
                     ),
                   ),
                 ),
@@ -416,18 +465,20 @@ class _StopListTile extends StatelessWidget {
     required this.stopName,
     required this.state,
     required this.accent,
+    this.etaHint,
   });
 
   final String stopName;
   final _StopLeg state;
   final Color accent;
+  final String? etaHint;
 
   @override
   Widget build(BuildContext context) {
     final subtitle = switch (state) {
       _StopLeg.passed => 'Passed',
       _StopLeg.current => 'Next stop',
-      _StopLeg.upcoming => 'Scheduled',
+      _StopLeg.upcoming => etaHint ?? 'Scheduled',
     };
 
     return Container(
@@ -514,5 +565,32 @@ extension BusRouteTrackingColors on BusRoute {
       default:
         return AppColors.primaryContainer;
     }
+  }
+}
+
+class _ZoomBtn extends StatelessWidget {
+  const _ZoomBtn({required this.icon, required this.onTap});
+  final IconData icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 36,
+        height: 36,
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.9),
+          borderRadius: BorderRadius.circular(8),
+          boxShadow: [
+            BoxShadow(
+                color: Colors.black.withOpacity(0.12), blurRadius: 8),
+          ],
+        ),
+        alignment: Alignment.center,
+        child: Icon(icon, size: 18, color: Colors.black87),
+      ),
+    );
   }
 }

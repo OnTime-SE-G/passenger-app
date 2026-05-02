@@ -8,6 +8,7 @@ import '../theme/app_spacing.dart';
 import '../theme/app_theme.dart';
 import '../theme/app_typography.dart';
 import '../widgets/app_card.dart';
+import '../widgets/global_app_bar.dart';
 import '../widgets/map_widgets.dart';
 import '../widgets/primary_button.dart';
 import '../widgets/route_badge.dart';
@@ -26,7 +27,9 @@ class NearbyStopsScreen extends StatefulWidget {
 class _NearbyStopsScreenState extends State<NearbyStopsScreen> {
   final _repo = DemoRepository.instance;
   final _mapCtl = MapController();
+  final _searchCtl = TextEditingController();
   BusStop? _selected;
+  String _searchQuery = '';
 
   @override
   void initState() {
@@ -35,14 +38,47 @@ class _NearbyStopsScreenState extends State<NearbyStopsScreen> {
     if (n.isNotEmpty) _selected = n.first.stop;
   }
 
+  @override
+  void dispose() {
+    _searchCtl.dispose();
+    super.dispose();
+  }
+
   void _select(BusStop s) {
     setState(() => _selected = s);
     _mapCtl.move(s.location, 16);
   }
 
+  void _zoomIn() {
+    _mapCtl.move(_mapCtl.camera.center, _mapCtl.camera.zoom + 1);
+  }
+
+  void _zoomOut() {
+    _mapCtl.move(_mapCtl.camera.center, _mapCtl.camera.zoom - 1);
+  }
+
+  void _resetBearing() {
+    _mapCtl.rotate(0);
+  }
+
   @override
   Widget build(BuildContext context) {
     final nearby = _repo.nearbyStops(_repo.userLocation);
+    final filtered = _searchQuery.isEmpty
+        ? nearby
+        : nearby
+            .where((e) => e.stop.name
+                .toLowerCase()
+                .contains(_searchQuery.toLowerCase()))
+            .toList();
+
+    // Route accent colors for polylines
+    final routeColors = [
+      const Color(0xFF2563EB),
+      const Color(0xFF7C3AED),
+      const Color(0xFF0891B2),
+      const Color(0xFFEA580C),
+    ];
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -54,6 +90,16 @@ class _NearbyStopsScreenState extends State<NearbyStopsScreen> {
             zoom: 15,
             layers: [
               const AppMapTiles(),
+              // Route polylines
+              PolylineLayer(
+                polylines: List.generate(_repo.routes.length, (i) {
+                  return Polyline(
+                    points: _repo.routes[i].path,
+                    strokeWidth: 3.5,
+                    color: routeColors[i % routeColors.length].withOpacity(0.75),
+                  );
+                }),
+              ),
               MarkerLayer(markers: [
                 Marker(
                   point: _repo.userLocation,
@@ -76,7 +122,7 @@ class _NearbyStopsScreenState extends State<NearbyStopsScreen> {
             ],
           ),
 
-          // Top bar
+          // Top bar — search + back + global actions
           Positioned(
             top: MediaQuery.of(context).padding.top + AppSpacing.sm,
             left: AppSpacing.lg,
@@ -92,25 +138,63 @@ class _NearbyStopsScreenState extends State<NearbyStopsScreen> {
                     icon: const Icon(Icons.arrow_back, color: AppColors.onSurface),
                   ),
                   Expanded(
-                    child: Text(
-                      widget.destinationQuery ?? 'Nearby Stops',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 14,
-                        color: AppColors.onSurface,
+                    child: TextField(
+                      controller: _searchCtl,
+                      onChanged: (v) => setState(() => _searchQuery = v),
+                      decoration: InputDecoration(
+                        hintText: 'Search bus stops…',
+                        hintStyle: GoogleFonts.plusJakartaSans(
+                          color: AppColors.onSurfaceVariant,
+                          fontSize: 14,
+                        ),
+                        border: InputBorder.none,
+                        isDense: true,
+                        prefixIcon: const Icon(Icons.search,
+                            size: 20, color: AppColors.onSurfaceVariant),
+                        suffixIcon: _searchQuery.isNotEmpty
+                            ? IconButton(
+                                icon: const Icon(Icons.close, size: 18),
+                                color: AppColors.onSurfaceVariant,
+                                onPressed: () {
+                                  _searchCtl.clear();
+                                  setState(() => _searchQuery = '');
+                                },
+                              )
+                            : null,
                       ),
                     ),
+                  ),
+                  GlobalHeaderActions(
+                    onRefresh: () => setState(() {}),
+                    onNotifications: () {},
+                    onProfile: () {},
                   ),
                 ],
               ),
             ),
           ),
 
-          // FABs
+          // FABs — my location + zoom controls
           Positioned(
             right: AppSpacing.lg,
             bottom: MediaQuery.of(context).size.height * 0.42 + AppSpacing.md,
             child: Column(
               children: [
+                _MapFab(
+                  icon: Icons.add,
+                  onPressed: _zoomIn,
+                ),
+                const SizedBox(height: 6),
+                _MapFab(
+                  icon: Icons.remove,
+                  onPressed: _zoomOut,
+                ),
+                const SizedBox(height: 6),
+                _MapFab(
+                  icon: Icons.explore_outlined,
+                  onPressed: _resetBearing,
+                ),
+                const SizedBox(height: 6),
                 _MapFab(
                   icon: Icons.my_location,
                   onPressed: () => _mapCtl.move(_repo.userLocation, 15),
@@ -144,7 +228,7 @@ class _NearbyStopsScreenState extends State<NearbyStopsScreen> {
                         children: [
                           Text('Nearby stops', style: AppTypography.headline(20)),
                           const Spacer(),
-                          Text('${nearby.length} found',
+                          Text('${filtered.length} found',
                               style: GoogleFonts.plusJakartaSans(color: AppColors.outline, fontSize: 12)),
                         ],
                       ),
@@ -155,10 +239,10 @@ class _NearbyStopsScreenState extends State<NearbyStopsScreen> {
                         controller: controller,
                         padding: const EdgeInsets.fromLTRB(
                             AppSpacing.lg, 0, AppSpacing.lg, AppSpacing.lg),
-                        itemCount: nearby.length,
+                        itemCount: filtered.length,
                         separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.sm),
                         itemBuilder: (_, i) {
-                          final entry = nearby[i];
+                          final entry = filtered[i];
                           return _StopTile(
                             stop: entry.stop,
                             meters: entry.meters,

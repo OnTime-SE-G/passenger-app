@@ -8,6 +8,7 @@ import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_theme.dart';
 import '../theme/app_typography.dart';
+import '../widgets/global_app_bar.dart';
 import '../widgets/map_widgets.dart';
 import '../widgets/ontime_logo.dart';
 import '../widgets/primary_button.dart';
@@ -56,10 +57,10 @@ class _PassengerSearchHomeScreenState extends State<PassengerSearchHomeScreen> {
                   children: [
                     const OnTimeLogo(size: OnTimeLogoSize.small),
                     const Spacer(),
-                    IconButton(
-                      onPressed: () {},
-                      icon: const Icon(Icons.notifications_outlined),
-                      color: AppColors.navInactive,
+                    GlobalHeaderActions(
+                      onRefresh: () => setState(() {}),
+                      onNotifications: () {},
+                      onProfile: () {},
                     ),
                   ],
                 ),
@@ -126,14 +127,23 @@ class _PassengerSearchHomeScreenState extends State<PassengerSearchHomeScreen> {
                                   color: AppColors.surfaceContainerHigh,
                                 ),
                                 const Spacer(),
-                                CircleAvatar(
-                                  radius: 16,
-                                  backgroundColor:
-                                      AppColors.surfaceContainerLow,
-                                  child: Icon(
-                                    Icons.swap_vert,
-                                    size: 18,
-                                    color: AppColors.outline,
+                                GestureDetector(
+                                  onTap: () {
+                                    final origin = _originCtl.text;
+                                    final dest = _destinationCtl.text;
+                                    setState(() {
+                                      _originCtl.text = dest.isNotEmpty ? dest : 'Current Location';
+                                      _destinationCtl.text = origin == 'Current Location' ? '' : origin;
+                                    });
+                                  },
+                                  child: CircleAvatar(
+                                    radius: 16,
+                                    backgroundColor: AppColors.primary.withOpacity(0.1),
+                                    child: Icon(
+                                      Icons.swap_vert,
+                                      size: 18,
+                                      color: AppColors.primary,
+                                    ),
                                   ),
                                 ),
                               ],

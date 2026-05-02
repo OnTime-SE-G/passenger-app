@@ -88,3 +88,43 @@ class RecentSearch {
   });
 }
 
+enum AlertType { disruption, delay, info }
+
+class ServiceAlert {
+  final String id;
+  final AlertType type;
+  final String routeCode;
+  final String title;
+  final String body;
+  final DateTime timestamp;
+
+  const ServiceAlert({
+    required this.id,
+    required this.type,
+    required this.routeCode,
+    required this.title,
+    required this.body,
+    required this.timestamp,
+  });
+}
+
+class SavedRoute {
+  final String routeCode;
+  final String name;
+
+  const SavedRoute({required this.routeCode, required this.name});
+}
+
+class RecentTrip {
+  final String from;
+  final String to;
+  final String routeCode;
+  final DateTime at;
+
+  const RecentTrip({
+    required this.from,
+    required this.to,
+    required this.routeCode,
+    required this.at,
+  });
+}

@@ -12,7 +12,10 @@ import '../widgets/global_app_bar.dart';
 import '../widgets/map_widgets.dart';
 import '../widgets/primary_button.dart';
 import '../widgets/ontime_logo.dart';
+import '../widgets/notifications_sheet.dart';
+import '../services/app_tab_controller.dart';
 import 'nearby_stops_screen.dart';
+import 'profile_screen.dart';
 
 /// Search home — origin / destination card + Voyager preview + recent routes.
 class PassengerSearchHomeScreen extends StatefulWidget {
@@ -65,8 +68,18 @@ class _PassengerSearchHomeScreenState extends State<PassengerSearchHomeScreen> {
                     ),
                     GlobalHeaderActions(
                       onRefresh: () => setState(() {}),
-                      onNotifications: () {},
-                      onProfile: () {},
+                      onNotifications: () {
+                        showModalBottomSheet(
+                          context: context,
+                          useRootNavigator: true,
+                          isScrollControlled: true,
+                          backgroundColor: Colors.transparent,
+                          builder: (_) => const NotificationsSheet(),
+                        );
+                      },
+                      onProfile: () {
+                        AppTabController.instance.jumpTo(5);
+                      },
                     ),
                   ],
                 ),

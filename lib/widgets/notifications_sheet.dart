@@ -14,6 +14,7 @@ class NotificationsSheet extends StatefulWidget {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
+      useRootNavigator: true,
       builder: (_) => const NotificationsSheet(),
     );
   }

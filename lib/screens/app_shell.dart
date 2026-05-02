@@ -63,7 +63,6 @@ class _AppShellState extends State<AppShell> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      extendBody: true,
       body: _pageForIndex(),
       bottomNavigationBar: _BottomNav(
         currentIndex: _ctrl.index,

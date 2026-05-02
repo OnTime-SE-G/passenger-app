@@ -137,6 +137,52 @@ class DemoRepository {
     RecentSearch(from: 'Willow St. Crossing', to: 'Parkside Terminal', at: DateTime.now().subtract(const Duration(days: 2))),
   ];
 
+  late final List<ServiceAlert> alerts = [
+    ServiceAlert(
+      id: 'a1',
+      type: AlertType.disruption,
+      routeCode: '120',
+      title: 'Route 120 — Service Suspended',
+      body: 'Service suspended between Pettah and Wellawatte due to road works. Use route 138 as alternative.',
+      timestamp: DateTime.now().subtract(const Duration(minutes: 10)),
+    ),
+    ServiceAlert(
+      id: 'a2',
+      type: AlertType.delay,
+      routeCode: '882',
+      title: 'Route 882 — 15 min Delay',
+      body: 'All buses on the Colombo–Piliyandala route are running approximately 15 minutes late due to heavy traffic near Nugegoda junction.',
+      timestamp: DateTime.now().subtract(const Duration(minutes: 25)),
+    ),
+    ServiceAlert(
+      id: 'a3',
+      type: AlertType.info,
+      routeCode: '138',
+      title: 'Route 138 — Extra Service',
+      body: 'Additional buses added on the Fort–Maharagama route during peak hours (7–9 AM, 5–7 PM) until Friday.',
+      timestamp: DateTime.now().subtract(const Duration(hours: 1)),
+    ),
+    ServiceAlert(
+      id: 'a4',
+      type: AlertType.info,
+      routeCode: '24B',
+      title: 'Route 24B — Schedule Change',
+      body: 'Revised timetable in effect from Monday. Last service now departs at 22:30 instead of 23:00.',
+      timestamp: DateTime.now().subtract(const Duration(hours: 3)),
+    ),
+  ];
+
+  final List<SavedRoute> savedRoutes = [
+    SavedRoute(routeCode: '882', name: 'Colombo – Piliyandala'),
+    SavedRoute(routeCode: '138', name: 'Fort – Maharagama'),
+  ];
+
+  final List<RecentTrip> recentTrips = [
+    RecentTrip(from: 'Central Station', to: 'Market Square', routeCode: '882', at: DateTime.now().subtract(const Duration(hours: 1))),
+    RecentTrip(from: 'City Hall', to: 'University Jct.', routeCode: '138', at: DateTime.now().subtract(const Duration(days: 1))),
+    RecentTrip(from: 'Market Square', to: 'Shopping Mall', routeCode: '120', at: DateTime.now().subtract(const Duration(days: 2))),
+  ];
+
   // ---------------------------------------------------------------------------
   // Lookups
   // ---------------------------------------------------------------------------

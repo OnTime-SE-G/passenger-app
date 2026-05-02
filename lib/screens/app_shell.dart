@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../data/demo_repository.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
 import 'alerts_screen.dart';
@@ -24,36 +25,12 @@ class _AppShellState extends State<AppShell> {
   int _index = 0;
 
   static const _tabs = [
-    _Tab(
-      icon: Icons.search_rounded,
-      activeIcon: Icons.search_rounded,
-      label: 'Search',
-    ),
-    _Tab(
-      icon: Icons.near_me_outlined,
-      activeIcon: Icons.near_me_rounded,
-      label: 'Stops',
-    ),
-    _Tab(
-      icon: Icons.directions_bus_outlined,
-      activeIcon: Icons.directions_bus_rounded,
-      label: 'Routes',
-    ),
-    _Tab(
-      icon: Icons.map_outlined,
-      activeIcon: Icons.map_rounded,
-      label: 'Live',
-    ),
-    _Tab(
-      icon: Icons.notifications_outlined,
-      activeIcon: Icons.notifications_rounded,
-      label: 'Alerts',
-    ),
-    _Tab(
-      icon: Icons.person_outline_rounded,
-      activeIcon: Icons.person_rounded,
-      label: 'Profile',
-    ),
+    _Tab(icon: Icons.search_rounded, activeIcon: Icons.search_rounded, label: 'Search'),
+    _Tab(icon: Icons.near_me_outlined, activeIcon: Icons.near_me_rounded, label: 'Stops'),
+    _Tab(icon: Icons.directions_bus_outlined, activeIcon: Icons.directions_bus_rounded, label: 'Routes'),
+    _Tab(icon: Icons.map_outlined, activeIcon: Icons.map_rounded, label: 'Live'),
+    _Tab(icon: Icons.notifications_outlined, activeIcon: Icons.notifications_rounded, label: 'Alerts'),
+    _Tab(icon: Icons.person_outline_rounded, activeIcon: Icons.person_rounded, label: 'Profile'),
   ];
 
   Widget _pageForIndex() {
@@ -84,6 +61,7 @@ class _AppShellState extends State<AppShell> {
         currentIndex: _index,
         tabs: _tabs,
         onTap: (i) => setState(() => _index = i),
+        alertCount: DemoRepository.instance.alerts.length,
       ),
     );
   }
@@ -115,11 +93,13 @@ class _BottomNav extends StatelessWidget {
     required this.currentIndex,
     required this.tabs,
     required this.onTap,
+    this.alertCount = 0,
   });
 
   final int currentIndex;
   final List<_Tab> tabs;
   final ValueChanged<int> onTap;
+  final int alertCount;
 
   @override
   Widget build(BuildContext context) {
@@ -169,6 +149,9 @@ class _BottomNav extends StatelessWidget {
                   children: List.generate(tabs.length, (i) {
                     final tab = tabs[i];
                     final active = i == currentIndex;
+                    // Show badge on Alerts tab (index 4)
+                    final showBadge = i == 4 && alertCount > 0;
+
                     return Material(
                       color: Colors.transparent,
                       child: InkWell(
@@ -180,7 +163,7 @@ class _BottomNav extends StatelessWidget {
                           curve: Curves.easeOutCubic,
                           padding: EdgeInsets.symmetric(
                             vertical: 12,
-                            horizontal: active ? 16 : 12,
+                            horizontal: active ? 14 : 10,
                           ),
                           decoration: BoxDecoration(
                             color: active
@@ -191,17 +174,46 @@ class _BottomNav extends StatelessWidget {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(
-                                active ? tab.activeIcon : tab.icon,
-                                size: 24,
-                                color: active
-                                    ? AppColors.primary
-                                    : AppColors.navInactive,
+                              Stack(
+                                clipBehavior: Clip.none,
+                                children: [
+                                  Icon(
+                                    active ? tab.activeIcon : tab.icon,
+                                    size: 22,
+                                    color: active
+                                        ? AppColors.primary
+                                        : AppColors.navInactive,
+                                  ),
+                                  if (showBadge)
+                                    Positioned(
+                                      top: -4,
+                                      right: -6,
+                                      child: Container(
+                                        width: 14,
+                                        height: 14,
+                                        decoration: BoxDecoration(
+                                          color: AppColors.error,
+                                          shape: BoxShape.circle,
+                                          border: Border.all(color: Colors.white, width: 1.5),
+                                        ),
+                                        alignment: Alignment.center,
+                                        child: Text(
+                                          '$alertCount',
+                                          style: GoogleFonts.plusJakartaSans(
+                                            fontSize: 8,
+                                            fontWeight: FontWeight.w800,
+                                            color: Colors.white,
+                                            height: 1,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                ],
                               ),
                               AnimatedSize(
                                 duration: const Duration(milliseconds: 250),
                                 curve: Curves.easeOutCubic,
-                                child: active 
+                                child: active
                                     ? Padding(
                                         padding: const EdgeInsets.only(left: 6),
                                         child: Text(

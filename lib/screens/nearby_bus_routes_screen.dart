@@ -7,7 +7,6 @@ import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_theme.dart';
 import '../theme/app_typography.dart';
-import '../widgets/global_app_bar.dart';
 import '../widgets/ontime_logo.dart';
 import 'live_tracking_screen.dart';
 
@@ -22,9 +21,7 @@ class NearbyBusRoutesScreen extends StatefulWidget {
 class _NearbyBusRoutesScreenState extends State<NearbyBusRoutesScreen> {
   final _repo = DemoRepository.instance;
   final _destinationFilter = TextEditingController();
-  final _routeSearchCtl = TextEditingController();
   int _sortOption = 0;
-  String _routeSearchQuery = '';
   static const _sortLabels = ['Shortest ETA', 'Distance', 'Route Number'];
 
   static const _serviceTypes = [
@@ -39,7 +36,6 @@ class _NearbyBusRoutesScreenState extends State<NearbyBusRoutesScreen> {
   @override
   void dispose() {
     _destinationFilter.dispose();
-    _routeSearchCtl.dispose();
     super.dispose();
   }
 
@@ -68,15 +64,6 @@ class _NearbyBusRoutesScreenState extends State<NearbyBusRoutesScreen> {
       );
     }
 
-    final routeQ = _routeSearchQuery.trim().toLowerCase();
-    if (routeQ.isNotEmpty) {
-      rows.retainWhere(
-        (r) =>
-            r.route.name.toLowerCase().contains(routeQ) ||
-            r.route.code.toLowerCase().contains(routeQ),
-      );
-    }
-
     rows.sort((a, b) {
       switch (_sortOption) {
         case 0:
@@ -102,59 +89,21 @@ class _NearbyBusRoutesScreenState extends State<NearbyBusRoutesScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Header: search field + global actions
-            Container(
-              color: AppColors.background,
+            Padding(
               padding: const EdgeInsets.fromLTRB(
                 AppSpacing.xl,
                 AppSpacing.sm,
-                AppSpacing.md,
+                AppSpacing.xl,
                 AppSpacing.sm,
               ),
               child: Row(
                 children: [
-                  Expanded(
-                    child: Container(
-                      height: 44,
-                      decoration: BoxDecoration(
-                        color: AppColors.surfaceContainerHighest,
-                        borderRadius: BorderRadius.circular(AppSpacing.buttonRadius),
-                      ),
-                      child: TextField(
-                        controller: _routeSearchCtl,
-                        onChanged: (v) => setState(() => _routeSearchQuery = v),
-                        decoration: InputDecoration(
-                          hintText: 'Search routes…',
-                          hintStyle: GoogleFonts.plusJakartaSans(
-                            fontSize: 14,
-                            color: AppColors.onSurfaceVariant,
-                          ),
-                          prefixIcon: const Icon(
-                            Icons.search,
-                            size: 20,
-                            color: AppColors.onSurfaceVariant,
-                          ),
-                          suffixIcon: _routeSearchQuery.isNotEmpty
-                              ? IconButton(
-                                  icon: const Icon(Icons.close, size: 18),
-                                  onPressed: () {
-                                    _routeSearchCtl.clear();
-                                    setState(() => _routeSearchQuery = '');
-                                  },
-                                )
-                              : null,
-                          border: InputBorder.none,
-                          isDense: true,
-                          contentPadding:
-                              const EdgeInsets.symmetric(vertical: 12),
-                        ),
-                      ),
-                    ),
-                  ),
-                  GlobalHeaderActions(
-                    onRefresh: () => setState(() {}),
-                    onNotifications: () {},
-                    onProfile: () {},
+                  const OnTimeLogo(size: OnTimeLogoSize.small),
+                  const Spacer(),
+                  IconButton(
+                    icon: const Icon(Icons.search),
+                    color: AppColors.navInactive,
+                    onPressed: () {},
                   ),
                 ],
               ),

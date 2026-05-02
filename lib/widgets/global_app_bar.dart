@@ -7,7 +7,7 @@ import '../theme/app_colors.dart';
 /// Shared top-right action trio that mirrors the web reference:
 /// [Refresh]  [Bell w/ badge]  [Profile avatar]
 ///
-/// Drop this into any screen's AppBar.actions or as a Row in a custom header.
+/// Placed in AppBar.actions or as a Row child on every main screen.
 class GlobalHeaderActions extends StatelessWidget {
   const GlobalHeaderActions({
     super.key,
@@ -31,8 +31,9 @@ class GlobalHeaderActions extends StatelessWidget {
         IconButton(
           tooltip: 'Refresh',
           onPressed: onRefresh,
-          icon: const Icon(Icons.refresh_rounded),
+          icon: const Icon(Icons.refresh_rounded, size: 22),
           color: AppColors.onSurfaceVariant,
+          splashRadius: 20,
         ),
 
         // Badged bell
@@ -40,10 +41,17 @@ class GlobalHeaderActions extends StatelessWidget {
           clipBehavior: Clip.none,
           children: [
             IconButton(
-              tooltip: 'Notifications',
-              onPressed: onNotifications ?? () {},
-              icon: const Icon(Icons.notifications_outlined),
+              tooltip: 'Alerts',
+              onPressed: onNotifications ??
+                  () => ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Tap the Alerts tab to view alerts'),
+                          duration: Duration(seconds: 2),
+                        ),
+                      ),
+              icon: const Icon(Icons.notifications_outlined, size: 22),
               color: AppColors.onSurfaceVariant,
+              splashRadius: 20,
             ),
             if (alertCount > 0)
               Positioned(
@@ -53,7 +61,7 @@ class GlobalHeaderActions extends StatelessWidget {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                     decoration: BoxDecoration(
-                      color: AppColors.primary,
+                      color: AppColors.error,
                       borderRadius: BorderRadius.circular(99),
                     ),
                     child: Text(
@@ -75,7 +83,13 @@ class GlobalHeaderActions extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.only(right: 8),
           child: GestureDetector(
-            onTap: onProfile ?? () {},
+            onTap: onProfile ??
+                () => ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Tap the Profile tab to view your profile'),
+                        duration: Duration(seconds: 2),
+                      ),
+                    ),
             child: CircleAvatar(
               radius: 16,
               backgroundColor: AppColors.primary.withOpacity(0.15),

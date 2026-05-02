@@ -10,7 +10,6 @@ import '../theme/app_theme.dart';
 import '../theme/app_typography.dart';
 import '../widgets/global_app_bar.dart';
 import '../widgets/map_widgets.dart';
-import '../widgets/ontime_logo.dart';
 import '../widgets/primary_button.dart';
 import 'nearby_stops_screen.dart';
 
@@ -49,14 +48,36 @@ class _PassengerSearchHomeScreenState extends State<PassengerSearchHomeScreen> {
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(
                   AppSpacing.xl,
-                  AppSpacing.md,
-                  AppSpacing.xl,
+                  AppSpacing.lg,
+                  AppSpacing.sm,
                   AppSpacing.sm,
                 ),
                 child: Row(
                   children: [
-                    const OnTimeLogo(size: OnTimeLogoSize.small),
-                    const Spacer(),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Good morning 👋',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 13,
+                              color: AppColors.onSurfaceVariant,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'Where to?',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.onSurface,
+                              letterSpacing: -0.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                     GlobalHeaderActions(
                       onRefresh: () => setState(() {}),
                       onNotifications: () {},
@@ -138,8 +159,8 @@ class _PassengerSearchHomeScreenState extends State<PassengerSearchHomeScreen> {
                                   },
                                   child: CircleAvatar(
                                     radius: 16,
-                                    backgroundColor: AppColors.primary.withOpacity(0.1),
-                                    child: Icon(
+                                    backgroundColor: AppColors.primary.withOpacity(0.10),
+                                    child: const Icon(
                                       Icons.swap_vert,
                                       size: 18,
                                       color: AppColors.primary,

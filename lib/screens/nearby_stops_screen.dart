@@ -31,6 +31,13 @@ class _NearbyStopsScreenState extends State<NearbyStopsScreen> {
   BusStop? _selected;
   String _searchQuery = '';
 
+  static const _routeColors = [
+    Color(0xFF2563EB),
+    Color(0xFF7C3AED),
+    Color(0xFF0891B2),
+    Color(0xFFEA580C),
+  ];
+
   @override
   void initState() {
     super.initState();
@@ -49,17 +56,8 @@ class _NearbyStopsScreenState extends State<NearbyStopsScreen> {
     _mapCtl.move(s.location, 16);
   }
 
-  void _zoomIn() {
-    _mapCtl.move(_mapCtl.camera.center, _mapCtl.camera.zoom + 1);
-  }
-
-  void _zoomOut() {
-    _mapCtl.move(_mapCtl.camera.center, _mapCtl.camera.zoom - 1);
-  }
-
-  void _resetBearing() {
-    _mapCtl.rotate(0);
-  }
+  void _zoomIn()  => _mapCtl.move(_mapCtl.camera.center, _mapCtl.camera.zoom + 1);
+  void _zoomOut() => _mapCtl.move(_mapCtl.camera.center, _mapCtl.camera.zoom - 1);
 
   @override
   Widget build(BuildContext context) {
@@ -72,18 +70,11 @@ class _NearbyStopsScreenState extends State<NearbyStopsScreen> {
                 .contains(_searchQuery.toLowerCase()))
             .toList();
 
-    // Route accent colors for polylines
-    final routeColors = [
-      const Color(0xFF2563EB),
-      const Color(0xFF7C3AED),
-      const Color(0xFF0891B2),
-      const Color(0xFFEA580C),
-    ];
-
     return Scaffold(
       backgroundColor: AppColors.background,
       body: Stack(
         children: [
+          // ── Map ─────────────────────────────────────────────────────────
           buildMap(
             controller: _mapCtl,
             center: _repo.userLocation,
@@ -92,13 +83,11 @@ class _NearbyStopsScreenState extends State<NearbyStopsScreen> {
               const AppMapTiles(),
               // Route polylines
               PolylineLayer(
-                polylines: List.generate(_repo.routes.length, (i) {
-                  return Polyline(
-                    points: _repo.routes[i].path,
-                    strokeWidth: 3.5,
-                    color: routeColors[i % routeColors.length].withOpacity(0.75),
-                  );
-                }),
+                polylines: List.generate(_repo.routes.length, (i) => Polyline(
+                  points: _repo.routes[i].path,
+                  strokeWidth: 3.5,
+                  color: _routeColors[i % _routeColors.length].withOpacity(0.7),
+                )),
               ),
               MarkerLayer(markers: [
                 Marker(
@@ -122,21 +111,22 @@ class _NearbyStopsScreenState extends State<NearbyStopsScreen> {
             ],
           ),
 
-          // Top bar — search + back + global actions
+          // ── Top search bar ───────────────────────────────────────────────
           Positioned(
             top: MediaQuery.of(context).padding.top + AppSpacing.sm,
             left: AppSpacing.lg,
             right: AppSpacing.lg,
             child: Container(
-              decoration: glassPanelDecoration(
-                radius: AppSpacing.buttonRadius,
-              ),
+              decoration: glassPanelDecoration(radius: AppSpacing.buttonRadius),
               child: Row(
                 children: [
-                  IconButton(
-                    onPressed: () => Navigator.of(context).maybePop(),
-                    icon: const Icon(Icons.arrow_back, color: AppColors.onSurface),
-                  ),
+                  if (Navigator.of(context).canPop())
+                    IconButton(
+                      onPressed: () => Navigator.of(context).maybePop(),
+                      icon: const Icon(Icons.arrow_back, color: AppColors.onSurface),
+                    )
+                  else
+                    const SizedBox(width: 8),
                   Expanded(
                     child: TextField(
                       controller: _searchCtl,
@@ -174,26 +164,15 @@ class _NearbyStopsScreenState extends State<NearbyStopsScreen> {
             ),
           ),
 
-          // FABs — my location + zoom controls
+          // ── FABs — zoom + my location ────────────────────────────────────
           Positioned(
             right: AppSpacing.lg,
             bottom: MediaQuery.of(context).size.height * 0.42 + AppSpacing.md,
             child: Column(
               children: [
-                _MapFab(
-                  icon: Icons.add,
-                  onPressed: _zoomIn,
-                ),
+                _MapFab(icon: Icons.add, onPressed: _zoomIn),
                 const SizedBox(height: 6),
-                _MapFab(
-                  icon: Icons.remove,
-                  onPressed: _zoomOut,
-                ),
-                const SizedBox(height: 6),
-                _MapFab(
-                  icon: Icons.explore_outlined,
-                  onPressed: _resetBearing,
-                ),
+                _MapFab(icon: Icons.remove, onPressed: _zoomOut),
                 const SizedBox(height: 6),
                 _MapFab(
                   icon: Icons.my_location,
@@ -203,7 +182,7 @@ class _NearbyStopsScreenState extends State<NearbyStopsScreen> {
             ),
           ),
 
-          // Draggable sheet
+          // ── Draggable sheet ──────────────────────────────────────────────
           DraggableScrollableSheet(
             initialChildSize: 0.38,
             minChildSize: 0.18,
@@ -229,7 +208,8 @@ class _NearbyStopsScreenState extends State<NearbyStopsScreen> {
                           Text('Nearby stops', style: AppTypography.headline(20)),
                           const Spacer(),
                           Text('${filtered.length} found',
-                              style: GoogleFonts.plusJakartaSans(color: AppColors.outline, fontSize: 12)),
+                              style: GoogleFonts.plusJakartaSans(
+                                  color: AppColors.outline, fontSize: 12)),
                         ],
                       ),
                     ),
@@ -240,7 +220,8 @@ class _NearbyStopsScreenState extends State<NearbyStopsScreen> {
                         padding: const EdgeInsets.fromLTRB(
                             AppSpacing.lg, 0, AppSpacing.lg, AppSpacing.lg),
                         itemCount: filtered.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.sm),
+                        separatorBuilder: (_, __) =>
+                            const SizedBox(height: AppSpacing.sm),
                         itemBuilder: (_, i) {
                           final entry = filtered[i];
                           return _StopTile(
@@ -303,7 +284,9 @@ class _StopTile extends StatelessWidget {
     final repo = DemoRepository.instance;
     return AppCard(
       onTap: onTap,
-      color: selected ? AppColors.primaryContainer.withOpacity(0.3) : AppColors.surfaceContainerLow,
+      color: selected
+          ? AppColors.primaryContainer.withOpacity(0.3)
+          : AppColors.surfaceContainerLow,
       borderColor: selected ? AppColors.primary.withOpacity(0.4) : null,
       padding: const EdgeInsets.all(AppSpacing.md),
       child: Row(
@@ -311,7 +294,9 @@ class _StopTile extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: selected ? AppColors.secondary.withOpacity(0.2) : AppColors.surfaceBright,
+              color: selected
+                  ? AppColors.secondary.withOpacity(0.2)
+                  : AppColors.surfaceBright,
               borderRadius: BorderRadius.circular(AppSpacing.md),
             ),
             child: Icon(
@@ -329,11 +314,14 @@ class _StopTile extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.plusJakartaSans(
-                        fontWeight: FontWeight.w700, color: AppColors.onSurface, fontSize: 15)),
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.onSurface,
+                        fontSize: 15)),
                 const SizedBox(height: 2),
                 Text(
                   '${meters.toStringAsFixed(0)} m · ${stop.routeIds.length} routes',
-                  style: GoogleFonts.plusJakartaSans(fontSize: 12, color: AppColors.outline),
+                  style: GoogleFonts.plusJakartaSans(
+                      fontSize: 12, color: AppColors.outline),
                 ),
               ],
             ),
@@ -342,7 +330,8 @@ class _StopTile extends StatelessWidget {
             spacing: 4,
             children: stop.routeIds
                 .take(2)
-                .map((id) => RouteBadge(code: repo.routeById(id).code, size: 32))
+                .map((id) =>
+                    RouteBadge(code: repo.routeById(id).code, size: 32))
                 .toList(),
           ),
         ],
@@ -364,9 +353,8 @@ class _MapFab extends StatelessWidget {
         width: 44,
         height: 44,
         decoration: BoxDecoration(
-          color: AppColors.surfaceContainerHighest.withOpacity(0.8),
-          shape: BoxShape.circle,
-          border: Border.all(color: Colors.white.withOpacity(0.05)),
+          color: Colors.white.withOpacity(0.92),
+          borderRadius: BorderRadius.circular(10),
           boxShadow: const [
             BoxShadow(color: Color(0x33000000), blurRadius: 12),
           ],

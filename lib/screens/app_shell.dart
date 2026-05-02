@@ -63,7 +63,10 @@ class _AppShellState extends State<AppShell> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _pageForIndex(),
+      body: SafeArea(
+        bottom: false,
+        child: _pageForIndex(),
+      ),
       bottomNavigationBar: _BottomNav(
         currentIndex: _ctrl.index,
         tabs: _tabs,

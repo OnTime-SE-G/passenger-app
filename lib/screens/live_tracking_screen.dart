@@ -151,26 +151,32 @@ class _LiveTrackingScreenState extends State<LiveTrackingScreen> {
                 ),
               ),
 
-              // Glass panel — web `/tracking` sidebar (top-left).
-              Positioned(
-                left: AppSpacing.md,
-                top: MediaQuery.of(context).padding.top + 60,
-                width: (MediaQuery.of(context).size.width - AppSpacing.md * 2)
-                    .clamp(0.0, 380.0),
-                bottom: MediaQuery.of(context).padding.bottom + 88,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(AppSpacing.sheetRadius),
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-                    child: Container(
-                      decoration: glassPanelDecoration(
-                        radius: AppSpacing.sheetRadius,
-                      ),
-                      child: SingleChildScrollView(
-                        padding: const EdgeInsets.all(AppSpacing.lg),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
+              // Glass panel — expandable bottom sheet on mobile, fixed width on web.
+              Align(
+                alignment: Alignment.bottomCenter,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 420),
+                  child: DraggableScrollableSheet(
+                    initialChildSize: 0.35,
+                    minChildSize: 0.15,
+                    maxChildSize: 0.85,
+                    builder: (context, scrollController) {
+                      return Container(
+                        margin: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+                        child: ClipRRect(
+                          borderRadius: const BorderRadius.vertical(top: Radius.circular(AppSpacing.sheetRadius)),
+                          child: BackdropFilter(
+                            filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                            child: Container(
+                              decoration: glassPanelDecoration(
+                                radius: AppSpacing.sheetRadius,
+                              ),
+                              child: SingleChildScrollView(
+                                controller: scrollController,
+                                padding: const EdgeInsets.all(AppSpacing.lg),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                                  children: [
                             Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
@@ -298,7 +304,11 @@ class _LiveTrackingScreenState extends State<LiveTrackingScreen> {
                     ),
                   ),
                 ),
-              ),
+              );
+            },
+          ),
+        ),
+      ),
             ],
           );
         },

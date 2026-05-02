@@ -119,21 +119,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   _toggle('Show delays on map', _showDelays,
                       (v) => setState(() => _showDelays = v)),
                 ])),
-                const SizedBox(height: AppSpacing.xl),
-
-                // My Account
-                _header('MY ACCOUNT'),
-                const SizedBox(height: AppSpacing.sm),
-                _card(Column(children: [
-                  _accountRow(Icons.lock_outline_rounded, 'Change Password',
-                      () {}, false),
-                  const Divider(height: 1, color: Color(0x14000000)),
-                  _accountRow(Icons.notifications_outlined,
-                      'Push Notification Settings', () {}, false),
-                  const Divider(height: 1, color: Color(0x14000000)),
-                  _accountRow(
-                      Icons.logout_rounded, 'Sign Out', () {}, true),
-                ])),
               ],
             ),
           ),
@@ -179,31 +164,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
               activeColor: AppColors.primary),
         ]),
       );
-
-  Widget _accountRow(
-      IconData icon, String label, VoidCallback onTap, bool destructive) {
-    final color =
-        destructive ? AppColors.errorBright : AppColors.onSurface;
-    return InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        child: Row(children: [
-          Icon(icon, size: 20, color: color.withOpacity(0.8)),
-          const SizedBox(width: AppSpacing.md),
-          Expanded(
-              child: Text(label,
-                  style: GoogleFonts.plusJakartaSans(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 14,
-                      color: color))),
-          if (!destructive)
-            Icon(Icons.chevron_right,
-                size: 18, color: AppColors.onSurfaceVariant),
-        ]),
-      ),
-    );
-  }
 }
 
 class _SavedRouteRow extends StatefulWidget {

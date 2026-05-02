@@ -11,6 +11,7 @@ import '../theme/app_typography.dart';
 import '../widgets/global_app_bar.dart';
 import '../widgets/map_widgets.dart';
 import '../widgets/primary_button.dart';
+import '../widgets/ontime_logo.dart';
 import 'nearby_stops_screen.dart';
 
 /// Search home — origin / destination card + Voyager preview + recent routes.
@@ -57,24 +58,8 @@ class _PassengerSearchHomeScreenState extends State<PassengerSearchHomeScreen> {
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Good morning 👋',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 13,
-                              color: AppColors.onSurfaceVariant,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            'Where to?',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 22,
-                              fontWeight: FontWeight.w800,
-                              color: AppColors.onSurface,
-                              letterSpacing: -0.5,
-                            ),
-                          ),
+                        children: const [
+                          OnTimeLogo(size: OnTimeLogoSize.normal),
                         ],
                       ),
                     ),

@@ -1,24 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_map/flutter_map.dart';
-import 'package:latlong2/latlong.dart';
 
 import '../theme/app_colors.dart';
-
-/// Light basemap — Carto Voyager (map stays readable while app chrome stays dark).
-class AppMapTiles extends StatelessWidget {
-  const AppMapTiles({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return TileLayer(
-      urlTemplate:
-          'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-      retinaMode: MediaQuery.of(context).devicePixelRatio > 1.5,
-      userAgentPackageName: 'com.ontime.passenger_app',
-      subdomains: const ['a', 'b', 'c', 'd'],
-    );
-  }
-}
 
 /// User dot — blue fill + white ring (see web home map marker).
 class UserLocationMarker extends StatefulWidget {
@@ -191,22 +173,3 @@ class _LiveBusMarkerState extends State<LiveBusMarker>
   }
 }
 
-FlutterMap buildMap({
-  required MapController controller,
-  required LatLng center,
-  double zoom = 15,
-  required List<Widget> layers,
-  bool interactive = true,
-}) {
-  return FlutterMap(
-    mapController: controller,
-    options: MapOptions(
-      initialCenter: center,
-      initialZoom: zoom,
-      interactionOptions: InteractionOptions(
-        flags: interactive ? InteractiveFlag.all : InteractiveFlag.none,
-      ),
-    ),
-    children: layers,
-  );
-}

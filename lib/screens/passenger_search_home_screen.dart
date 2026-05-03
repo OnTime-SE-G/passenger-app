@@ -1,21 +1,20 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_map/flutter_map.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
+
 import '../data/demo_repository.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_theme.dart';
 import '../theme/app_typography.dart';
 import '../widgets/global_app_bar.dart';
-import '../widgets/map_widgets.dart';
 import '../widgets/primary_button.dart';
 import '../widgets/ontime_logo.dart';
 import '../widgets/notifications_sheet.dart';
 import '../services/app_tab_controller.dart';
 import 'nearby_stops_screen.dart';
-import 'profile_screen.dart';
 
 /// Search home — origin / destination card + Voyager preview + recent routes.
 class PassengerSearchHomeScreen extends StatefulWidget {
@@ -28,7 +27,6 @@ class PassengerSearchHomeScreen extends StatefulWidget {
 
 class _PassengerSearchHomeScreenState extends State<PassengerSearchHomeScreen> {
   final _repo = DemoRepository.instance;
-  final _mapCtl = MapController();
   final _originCtl = TextEditingController(text: 'Current Location');
   final _destinationCtl = TextEditingController();
 
@@ -307,35 +305,12 @@ class _PassengerSearchHomeScreenState extends State<PassengerSearchHomeScreen> {
                         child: Stack(
                           fit: StackFit.expand,
                           children: [
-                            buildMap(
-                              controller: _mapCtl,
-                              center: center,
-                              zoom: 13,
-                              interactive: false,
-                              layers: [
-                                const AppMapTiles(),
-                                PolylineLayer(
-                                  polylines: _repo.routes.map((route) {
-                                    return Polyline(
-                                      points: route.path,
-                                      strokeWidth: 3,
-                                      color: AppColors.primary.withOpacity(
-                                        0.75,
-                                      ),
-                                    );
-                                  }).toList(),
-                                ),
-                                MarkerLayer(
-                                  markers: [
-                                    Marker(
-                                      point: center,
-                                      width: 48,
-                                      height: 48,
-                                      child: const UserLocationMarker(),
-                                    ),
-                                  ],
-                                ),
-                              ],
+                            MapWidget(
+                              styleUri: MapboxStyles.STANDARD,
+                              cameraOptions: CameraOptions(
+                                center: Point(coordinates: Position(center.longitude, center.latitude)),
+                                zoom: 13.0,
+                              ),
                             ),
                             Positioned(
                               left: AppSpacing.md,

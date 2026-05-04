@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../data/demo_repository.dart';
+import '../data/api_repository.dart';
 import '../data/models.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
@@ -25,7 +25,7 @@ class NearbyStopsScreen extends StatefulWidget {
 }
 
 class _NearbyStopsScreenState extends State<NearbyStopsScreen> {
-  final _repo = DemoRepository.instance;
+  final _repo = ApiRepository.instance;
   final _mapCtl = MapController();
   final _searchCtl = TextEditingController();
   BusStop? _selected;
@@ -281,7 +281,7 @@ class _StopTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final repo = DemoRepository.instance;
+    final repo = ApiRepository.instance;
     return AppCard(
       onTap: onTap,
       color: selected

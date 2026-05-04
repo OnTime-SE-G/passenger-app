@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../data/demo_repository.dart';
+import '../data/api_repository.dart';
 import '../data/models.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
@@ -18,7 +18,7 @@ class StopDetailsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final repo = DemoRepository.instance;
+    final repo = ApiRepository.instance;
     final routes = stop.routeIds.map(repo.routeById).toList();
 
     return Scaffold(

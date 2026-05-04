@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../data/demo_repository.dart';
+import '../data/api_repository.dart';
 import '../data/models.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
@@ -19,7 +19,7 @@ class NearbyBusRoutesScreen extends StatefulWidget {
 }
 
 class _NearbyBusRoutesScreenState extends State<NearbyBusRoutesScreen> {
-  final _repo = DemoRepository.instance;
+  final _repo = ApiRepository.instance;
   final _destinationFilter = TextEditingController();
   int _sortOption = 0;
   static const _sortLabels = ['Shortest ETA', 'Distance', 'Route Number'];

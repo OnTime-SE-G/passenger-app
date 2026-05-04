@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../data/demo_repository.dart';
+import '../data/api_repository.dart';
 import '../data/models.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
@@ -21,7 +21,7 @@ class BusListScreen extends StatefulWidget {
 }
 
 class _BusListScreenState extends State<BusListScreen> {
-  final _repo = DemoRepository.instance;
+  final _repo = ApiRepository.instance;
   String _query = '';
   String _activeFilter = 'All';
 
@@ -151,7 +151,7 @@ class BusTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final repo = DemoRepository.instance;
+    final repo = ApiRepository.instance;
     final route = repo.routeById(bus.routeId);
     final pos = repo.snapshotFor(bus.id);
     final status = _mapStatus(pos.status);

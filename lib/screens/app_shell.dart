@@ -3,7 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../data/demo_repository.dart';
+import '../data/api_repository.dart';
 import '../services/app_tab_controller.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
@@ -71,7 +71,7 @@ class _AppShellState extends State<AppShell> {
         currentIndex: _ctrl.index,
         tabs: _tabs,
         onTap: (i) => _ctrl.jumpTo(i),
-        alertCount: DemoRepository.instance.alerts.length,
+        alertCount: ApiRepository.instance.alerts.length,
       ),
     );
   }

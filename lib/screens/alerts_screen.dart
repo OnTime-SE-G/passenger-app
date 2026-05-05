@@ -17,17 +17,26 @@ class AlertsScreen extends StatefulWidget {
 
 class _AlertsScreenState extends State<AlertsScreen> {
   final _repo = ApiRepository.instance;
+  List<ServiceAlert> _alerts = [];
   bool _refreshing = false;
 
-  Future<void> _refresh() async {
-    setState(() => _refreshing = true);
-    await Future<void>.delayed(const Duration(milliseconds: 800));
-    if (mounted) setState(() => _refreshing = false);
+  @override
+  void initState() {
+    super.initState();
+    _loadAlerts();
   }
+
+  Future<void> _loadAlerts() async {
+    if (mounted) setState(() => _refreshing = true);
+    final loaded = await _repo.fetchAlerts();
+    if (mounted) setState(() { _alerts = loaded; _refreshing = false; });
+  }
+
+  Future<void> _refresh() => _loadAlerts();
 
   @override
   Widget build(BuildContext context) {
-    final alerts = _repo.alerts;
+    final alerts = _alerts;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -38,7 +47,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
         automaticallyImplyLeading: false,
         title: Text(
           'Service Alerts',
-          style: GoogleFonts.plusJakartaSans(
+          style: GoogleFonts.inter(
             fontWeight: FontWeight.w700,
             fontSize: 20,
             color: AppColors.onSurface,
@@ -69,7 +78,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
                         Expanded(
                           child: Text(
                             'Live updates for routes in your area',
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.inter(
                               fontSize: 14,
                               color: AppColors.onSurfaceVariant,
                             ),
@@ -97,7 +106,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
                               const SizedBox(width: 5),
                               Text(
                                 'Live',
-                                style: GoogleFonts.plusJakartaSans(
+                                style: GoogleFonts.inter(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w700,
                                   color: AppColors.success,
@@ -183,7 +192,7 @@ class _AlertCard extends StatelessWidget {
                       const Spacer(),
                       Text(
                         _formatTime(alert.timestamp),
-                        style: GoogleFonts.plusJakartaSans(
+                        style: GoogleFonts.inter(
                           fontSize: 12,
                           color: AppColors.onSurfaceVariant,
                         ),
@@ -193,7 +202,7 @@ class _AlertCard extends StatelessWidget {
                   const SizedBox(height: 8),
                   Text(
                     alert.title,
-                    style: GoogleFonts.plusJakartaSans(
+                    style: GoogleFonts.inter(
                       fontWeight: FontWeight.w700,
                       fontSize: 15,
                       color: AppColors.onSurface,
@@ -202,7 +211,7 @@ class _AlertCard extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     alert.body,
-                    style: GoogleFonts.plusJakartaSans(
+                    style: GoogleFonts.inter(
                       fontSize: 13,
                       color: AppColors.onSurfaceVariant,
                       height: 1.5,
@@ -296,7 +305,7 @@ class _TypeChip extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: GoogleFonts.plusJakartaSans(
+        style: GoogleFonts.inter(
           fontSize: 11,
           fontWeight: FontWeight.w800,
           color: color,
@@ -321,7 +330,7 @@ class _RouteChip extends StatelessWidget {
       ),
       child: Text(
         'Route $code',
-        style: GoogleFonts.plusJakartaSans(
+        style: GoogleFonts.inter(
           fontSize: 11,
           fontWeight: FontWeight.w700,
           color: AppColors.primary,

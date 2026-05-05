@@ -93,7 +93,7 @@ class _PassengerSearchHomeScreenState extends State<PassengerSearchHomeScreen> {
                   children: [
                     Text(
                       'Where to?',
-                      style: GoogleFonts.plusJakartaSans(
+                      style: GoogleFonts.inter(
                         fontSize: 36,
                         fontWeight: FontWeight.w800,
                         height: 1.1,
@@ -128,7 +128,7 @@ class _PassengerSearchHomeScreenState extends State<PassengerSearchHomeScreen> {
                                 border: InputBorder.none,
                                 isDense: true,
                               ),
-                              style: GoogleFonts.plusJakartaSans(
+                              style: GoogleFonts.inter(
                                 fontWeight: FontWeight.w500,
                                 color: AppColors.onSurface,
                               ),
@@ -178,7 +178,7 @@ class _PassengerSearchHomeScreenState extends State<PassengerSearchHomeScreen> {
                                 border: InputBorder.none,
                                 isDense: true,
                               ),
-                              style: GoogleFonts.plusJakartaSans(
+                              style: GoogleFonts.inter(
                                 color: AppColors.onSurface,
                               ),
                             ),
@@ -198,7 +198,7 @@ class _PassengerSearchHomeScreenState extends State<PassengerSearchHomeScreen> {
                                 onPressed: () {},
                                 child: Text(
                                   'Options',
-                                  style: GoogleFonts.plusJakartaSans(
+                                  style: GoogleFonts.inter(
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
@@ -225,7 +225,7 @@ class _PassengerSearchHomeScreenState extends State<PassengerSearchHomeScreen> {
 
                     Text(
                       'RECENT SEARCHES',
-                      style: GoogleFonts.plusJakartaSans(
+                      style: GoogleFonts.inter(
                         fontSize: 11,
                         fontWeight: FontWeight.w800,
                         letterSpacing: 1.2,
@@ -276,7 +276,7 @@ class _PassengerSearchHomeScreenState extends State<PassengerSearchHomeScreen> {
                                       children: [
                                         Text(
                                           '${r.from} → ${r.to}',
-                                          style: GoogleFonts.plusJakartaSans(
+                                          style: GoogleFonts.inter(
                                             fontWeight: FontWeight.w700,
                                             fontSize: 15,
                                           ),
@@ -368,7 +368,7 @@ class _PassengerSearchHomeScreenState extends State<PassengerSearchHomeScreen> {
                                         Expanded(
                                           child: Text.rich(
                                             TextSpan(
-                                              style: GoogleFonts.plusJakartaSans(
+                                              style: GoogleFonts.inter(
                                                 fontSize: 13,
                                                 fontWeight: FontWeight.w700,
                                                 color: AppColors.onSurface,

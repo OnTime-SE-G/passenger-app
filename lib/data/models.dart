@@ -44,6 +44,7 @@ class Bus {
   final String routeId;
   final String driverName;
   final int capacity;
+  final String? status;
 
   const Bus({
     required this.id,
@@ -51,6 +52,7 @@ class Bus {
     required this.routeId,
     required this.driverName,
     required this.capacity,
+    this.status,
   });
 }
 

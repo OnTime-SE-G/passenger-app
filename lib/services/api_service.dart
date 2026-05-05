@@ -2,18 +2,18 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:latlong2/latlong.dart';
 
-// Android emulator → host machine localhost.
-// For physical device, set G2_BASE_URL at build time:
-//   flutter run --dart-define=G2_BASE_URL=http://192.168.x.x:8000
+// Web: defaults to localhost:8000.
+// Android emulator: flutter run --dart-define=G2_BASE_URL=http://10.0.2.2:8000
+// Physical device: flutter run --dart-define=G2_BASE_URL=http://192.168.x.x:8000
 const String _base = String.fromEnvironment(
   'G2_BASE_URL',
-  defaultValue: 'http://10.0.2.2:8000',
+  defaultValue: 'http://localhost:8000',
 );
 
 // WebSocket service
 const String wsBase = String.fromEnvironment(
   'G2_WS_URL',
-  defaultValue: 'ws://10.0.2.2:8004',
+  defaultValue: 'ws://localhost:8004',
 );
 
 class ApiService {

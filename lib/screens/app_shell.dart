@@ -209,7 +209,7 @@ class _BottomNav extends StatelessWidget {
                                         alignment: Alignment.center,
                                         child: Text(
                                           '$alertCount',
-                                          style: GoogleFonts.plusJakartaSans(
+                                          style: GoogleFonts.inter(
                                             fontSize: 8,
                                             fontWeight: FontWeight.w800,
                                             color: Colors.white,
@@ -228,7 +228,7 @@ class _BottomNav extends StatelessWidget {
                                         padding: const EdgeInsets.only(left: 6),
                                         child: Text(
                                           tab.label,
-                                          style: GoogleFonts.plusJakartaSans(
+                                          style: GoogleFonts.inter(
                                             fontSize: 13,
                                             fontWeight: FontWeight.w700,
                                             color: AppColors.primary,

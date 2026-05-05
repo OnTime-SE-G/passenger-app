@@ -1,11 +1,11 @@
 import 'dart:async';
-import 'dart:math';
 
 import 'package:latlong2/latlong.dart';
 
 import 'demo_repository.dart';
 import 'models.dart';
 import '../services/api_service.dart';
+import '../services/socket_service.dart';
 
 /// API-backed repository with the same public surface as [DemoRepository].
 ///
@@ -91,10 +91,11 @@ class ApiRepository {
     _buses = raw
         .map((b) => Bus(
               id: b['id'].toString(),
-              number: b['id'].toString(),
+              number: b['fleet_code']?.toString() ?? b['id'].toString(),
               routeId: b['route_id']?.toString() ?? '',
               driverName: 'Driver',
               capacity: (b['capacity'] as int?) ?? 50,
+              status: b['status']?.toString(),
             ))
         .toList();
   }
@@ -103,9 +104,73 @@ class ApiRepository {
   List<BusRoute> get routes => _routes.isNotEmpty ? _routes : _demo.routes;
   List<Bus> get buses => _buses.isNotEmpty ? _buses : _demo.buses;
 
+  /// Search routes between two coordinates via the G2 API.
+  Future<Map<String, dynamic>> searchRoutes({
+    required double startLat,
+    required double startLon,
+    required double endLat,
+    required double endLon,
+    int radius = 500,
+  }) => _api.searchRoutes(
+    startLat: startLat,
+    startLon: startLon,
+    endLat: endLat,
+    endLon: endLon,
+    radius: radius,
+  );
+
+  /// Live buses from the G2 API as typed Bus objects.
+  Future<List<Bus>> getLiveBuses() async {
+    if (!_loaded) await initialize();
+    if (_buses.isNotEmpty) return _buses;
+    // Reload fresh if empty
+    await _loadBuses();
+    return _buses.isNotEmpty ? _buses : _demo.buses;
+  }
+
+  /// Buses assigned to a specific route.
+  Future<List<Map<String, dynamic>>> getBusesByRoute(String routeId) =>
+      _api.getBusesByRoute(routeId);
+
+  /// Routes serving a specific stop (live API call).
+  Future<List<BusRoute>> fetchRoutesForStop(String stopId) async {
+    try {
+      final raw = await _api.getStopRoutes(stopId);
+      return raw.map((r) => BusRoute(
+        id: r['id'].toString(),
+        code: r['route_number']?.toString() ?? r['id'].toString(),
+        name: r['name'] as String,
+        origin: (r['name'] as String).split('-').first.trim(),
+        destination: (r['name'] as String).split('-').last.trim(),
+        path: [],
+        stopIds: [],
+      )).toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  /// Buses for a route (live API call).
+  Future<List<Bus>> fetchBusesForRoute(String routeId) async {
+    try {
+      final raw = await _api.getBusesByRoute(routeId);
+      return raw.map((b) => Bus(
+        id: b['id'].toString(),
+        number: b['fleet_code']?.toString() ?? b['id'].toString(),
+        routeId: routeId,
+        driverName: 'Driver',
+        capacity: (b['capacity'] as int?) ?? 50,
+        status: b['status']?.toString(),
+      )).toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
   BusRoute routeById(String id) {
     try {
-      return _routes.firstWhere((r) => r.id == id);
+      // Match by numeric ID or by route name (API stops return names, not IDs)
+      return _routes.firstWhere((r) => r.id == id || r.name == id);
     } catch (_) {
       return _demo.routeById(id);
     }
@@ -149,13 +214,137 @@ class ApiRepository {
     return list;
   }
 
-  // Alerts — delegates to demo data until the backend exposes an alerts endpoint.
-  List<ServiceAlert> get alerts => _demo.alerts;
+  // Alerts — derived from live buses (like ontime-web notifications page).
+  List<ServiceAlert> get alerts => _demo.alerts; // sync fallback
 
-  // Live tracking — delegates to demo stream until WebSocket is integrated.
-  // To wire real-time: connect to ws://<host>:8004/v1/live?busId=<busId>
-  // and yield BusPosition events from incoming JSON messages.
-  Stream<BusPosition> watchBus(String busId) => _demo.watchBus(busId);
+  /// Loads live buses + routes and derives service alerts — mirrors
+  /// ontime-web's `notifications/page.tsx` deriveAlerts() logic.
+  Future<List<ServiceAlert>> fetchAlerts() async {
+    try {
+      final buses = await _api.getLiveBuses();
+      final routes = await _api.getRoutes();
+      final routeMap = <String, Map<String, dynamic>>{
+        for (final r in routes) r['id'].toString(): r,
+      };
+
+      final alerts = <ServiceAlert>[];
+      for (final bus in buses) {
+        final status  = bus['status']?.toString()     ?? '';
+        final routeId = bus['route_id']?.toString()   ?? '';
+        final route   = routeMap[routeId];
+        final routeNum  = route?['route_number']?.toString() ?? routeId;
+        final routeName = route?['name']?.toString()         ?? 'Unknown Route';
+        final fleet     = bus['fleet_code']?.toString()      ?? bus['id'].toString();
+
+        if (status == 'breakdown' || status == 'incident') {
+          alerts.add(ServiceAlert(
+            id: 'inc-${bus['id']}',
+            type: AlertType.disruption,
+            routeCode: routeNum,
+            title: 'Route $routeNum — Bus Breakdown',
+            body: 'Bus $fleet on the $routeName route reported a breakdown. '
+                'Service on this route may be disrupted.',
+            timestamp: DateTime.now(),
+          ));
+        } else if (status == 'delayed') {
+          alerts.add(ServiceAlert(
+            id: 'dly-${bus['id']}',
+            type: AlertType.delay,
+            routeCode: routeNum,
+            title: 'Route $routeNum — Running Late',
+            body: 'Bus $fleet on the $routeName route is currently delayed. '
+                'Please expect longer wait times.',
+            timestamp: DateTime.now(),
+          ));
+        } else if (status == 'inactive' || status == 'maintenance') {
+          alerts.add(ServiceAlert(
+            id: 'off-${bus['id']}',
+            type: AlertType.info,
+            routeCode: routeNum,
+            title: 'Route $routeNum — Reduced Service',
+            body: 'Bus $fleet is currently offline ($status). '
+                'Fewer buses may be running on this route.',
+            timestamp: DateTime.now(),
+          ));
+        }
+      }
+      return alerts.isNotEmpty ? alerts : _demo.alerts;
+    } catch (_) {
+      return _demo.alerts;
+    }
+  }
+
+  /// Live bus position stream.
+  /// 1. Seeds immediately from the REST /buses/live snapshot.
+  /// 2. Then streams real-time updates from the G2 WebSocket service
+  ///    (ws://localhost:8004/v1/live) — same approach as ontime-web's
+  ///    tracking page (REST seed → socket updates).
+  /// Falls back to the demo stream when WS is unavailable.
+  Stream<BusPosition> watchBus(String busId) async* {
+    // ── 1. REST snapshot seed ────────────────────────────────────────────────
+    try {
+      final raw = await _api.getLiveBuses();
+      final match = raw.firstWhere(
+        (b) => b['id'].toString() == busId ||
+               b['fleet_code']?.toString().toUpperCase() == busId.toUpperCase(),
+        orElse: () => <String, dynamic>{},
+      );
+      if (match.isNotEmpty &&
+          match['latitude'] != null &&
+          match['longitude'] != null) {
+        yield BusPosition(
+          busId: busId,
+          location: LatLng(
+            (match['latitude']  as num).toDouble(),
+            (match['longitude'] as num).toDouble(),
+          ),
+          headingDeg:   (match['heading'] as num?)?.toDouble() ?? 0,
+          speedKmh:     (match['speed']   as num?)?.toDouble() ?? 0,
+          status: (match['status']?.toString() ?? '') == 'delayed'
+              ? BusLiveStatus.delayed
+              : BusLiveStatus.onTime,
+          etaMinutes:   0,
+          occupancyPct: 50,
+          nextStopIndex: 0,
+        );
+      }
+    } catch (_) {}
+
+    // ── 2. WebSocket live stream ─────────────────────────────────────────────
+    SocketService.instance.connect();
+    bool receivedLive = false;
+
+    await for (final loc in SocketService.instance.watchBus(busId).timeout(
+      const Duration(seconds: 8),
+      onTimeout: (sink) => sink.close(),
+    )) {
+      receivedLive = true;
+      yield BusPosition(
+        busId: loc.busId,
+        location: LatLng(loc.lat, loc.lng),
+        headingDeg:   loc.heading,
+        speedKmh:     loc.speed,
+        status: loc.status == 'delayed'
+            ? BusLiveStatus.delayed
+            : BusLiveStatus.onTime,
+        etaMinutes:   loc.eta,
+        occupancyPct: loc.occupancy == 'high'
+            ? 88
+            : loc.occupancy == 'medium' ? 55 : 25,
+        nextStopIndex: 0,
+      );
+    }
+
+    // ── 3. Fall back to demo stream if WS never fired ────────────────────────
+    if (!receivedLive) {
+      yield* _demo.watchBus(busId);
+    }
+  }
 
   BusPosition snapshotFor(String busId) => _demo.snapshotFor(busId);
+
+  // Recent searches / saved routes / recent trips — delegate to demo data.
+  List<RecentSearch> get recentSearches => _demo.recentSearches;
+  List<SavedRoute>   get savedRoutes    => _demo.savedRoutes;
+  List<RecentTrip>   get recentTrips    => _demo.recentTrips;
 }

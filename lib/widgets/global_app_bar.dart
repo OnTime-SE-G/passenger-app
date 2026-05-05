@@ -65,7 +65,7 @@ class GlobalHeaderActions extends StatelessWidget {
                     ),
                     child: Text(
                       '$alertCount',
-                      style: GoogleFonts.plusJakartaSans(
+                      style: GoogleFonts.inter(
                         fontSize: 9,
                         fontWeight: FontWeight.w800,
                         color: Colors.white,

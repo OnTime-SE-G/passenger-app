@@ -265,7 +265,7 @@ class _SplashScreenState extends State<SplashScreen>
                         children: [
                           Text(
                             'Your City.',
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.inter(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
                               color: const Color(0xFF64748B),
@@ -275,7 +275,7 @@ class _SplashScreenState extends State<SplashScreen>
                           ),
                           Text(
                             'On Time',
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.inter(
                               fontSize: 52,
                               fontWeight: FontWeight.w900,
                               color: const Color(0xFF2563EB),
@@ -285,7 +285,7 @@ class _SplashScreenState extends State<SplashScreen>
                           ),
                           Text(
                             'PUBLIC TRANSPORT',
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.inter(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
                               color: const Color(0xFF94A3B8),

@@ -5,7 +5,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:latlong2/latlong.dart';
 
-import '../data/demo_repository.dart';
+import '../data/api_repository.dart';
 import '../data/models.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
@@ -22,7 +22,7 @@ class LiveTrackingScreen extends StatefulWidget {
 }
 
 class _LiveTrackingScreenState extends State<LiveTrackingScreen> {
-  final _repo = DemoRepository.instance;
+  final _repo = ApiRepository.instance;
   final _mapCtl = MapController();
   late final Stream<BusPosition> _stream;
   BusPosition? _latest;
@@ -137,7 +137,7 @@ class _LiveTrackingScreenState extends State<LiveTrackingScreen> {
                           Expanded(
                             child: Text(
                               'Live Tracking',
-                              style: GoogleFonts.plusJakartaSans(
+                              style: GoogleFonts.inter(
                                 fontWeight: FontWeight.w700,
                                 fontSize: 17,
                                 color: AppColors.onSurface,
@@ -203,7 +203,7 @@ class _LiveTrackingScreenState extends State<LiveTrackingScreen> {
                                     children: [
                                       Text.rich(
                                         TextSpan(
-                                          style: GoogleFonts.plusJakartaSans(
+                                          style: GoogleFonts.inter(
                                             fontSize: 11,
                                             fontWeight: FontWeight.w700,
                                             letterSpacing: 0.6,
@@ -227,7 +227,7 @@ class _LiveTrackingScreenState extends State<LiveTrackingScreen> {
                                       const SizedBox(height: 4),
                                       Text(
                                         route.name,
-                                        style: GoogleFonts.plusJakartaSans(
+                                        style: GoogleFonts.inter(
                                           fontSize: 17,
                                           fontWeight: FontWeight.w700,
                                           height: 1.25,
@@ -236,7 +236,7 @@ class _LiveTrackingScreenState extends State<LiveTrackingScreen> {
                                       const SizedBox(height: 4),
                                       Text(
                                         'Driver: ${bus.driverName}',
-                                        style: GoogleFonts.plusJakartaSans(
+                                        style: GoogleFonts.inter(
                                           fontSize: 13,
                                           color: AppColors.onSurfaceVariant,
                                         ),
@@ -278,7 +278,7 @@ class _LiveTrackingScreenState extends State<LiveTrackingScreen> {
                             const SizedBox(height: AppSpacing.lg),
                             Text(
                               'ROUTE STOPS',
-                              style: GoogleFonts.plusJakartaSans(
+                              style: GoogleFonts.inter(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w800,
                                 letterSpacing: 1,
@@ -372,7 +372,7 @@ class _MiniStat extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             value,
-            style: GoogleFonts.plusJakartaSans(
+            style: GoogleFonts.inter(
               fontWeight: FontWeight.w700,
               fontSize: 15,
               color: AppColors.onSurface,
@@ -380,7 +380,7 @@ class _MiniStat extends StatelessWidget {
           ),
           Text(
             label.toUpperCase(),
-            style: GoogleFonts.plusJakartaSans(
+            style: GoogleFonts.inter(
               fontSize: 10,
               fontWeight: FontWeight.w700,
               letterSpacing: 0.5,
@@ -486,7 +486,7 @@ class _StopListTile extends StatelessWidget {
               children: [
                 Text(
                   stopName,
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.inter(
                     fontWeight: FontWeight.w600,
                     fontSize: 14,
                     color: AppColors.onSurface.withOpacity(
@@ -496,7 +496,7 @@ class _StopListTile extends StatelessWidget {
                 ),
                 Text(
                   subtitle,
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.inter(
                     fontSize: 12,
                     color: AppColors.onSurfaceVariant,
                   ),

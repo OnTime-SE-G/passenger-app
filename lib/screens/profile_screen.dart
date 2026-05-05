@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../data/demo_repository.dart';
+import '../data/api_repository.dart';
 import '../data/models.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
@@ -14,7 +14,7 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  final _repo = DemoRepository.instance;
+  final _repo = ApiRepository.instance;
   bool _accessibility = true;
   bool _notifications = true;
   bool _showDelays = true;
@@ -29,7 +29,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         scrolledUnderElevation: 0,
         automaticallyImplyLeading: false,
         title: Text('Profile',
-            style: GoogleFonts.plusJakartaSans(
+            style: GoogleFonts.inter(
                 fontWeight: FontWeight.w700,
                 fontSize: 20,
                 color: AppColors.onSurface)),
@@ -63,12 +63,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                           Text('Passenger',
-                              style: GoogleFonts.plusJakartaSans(
+                              style: GoogleFonts.inter(
                                   fontWeight: FontWeight.w700,
                                   fontSize: 22,
                                   color: AppColors.onSurface)),
                           Text('Colombo, Sri Lanka',
-                              style: GoogleFonts.plusJakartaSans(
+                              style: GoogleFonts.inter(
                                   fontSize: 13,
                                   color: AppColors.onSurfaceVariant)),
                         ])),
@@ -81,7 +81,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           foregroundColor: AppColors.primary,
                           side: BorderSide(
                               color: AppColors.primary.withOpacity(0.4)),
-                          textStyle: GoogleFonts.plusJakartaSans(
+                          textStyle: GoogleFonts.inter(
                               fontWeight: FontWeight.w700, fontSize: 13)),
                     ),
                   ]),
@@ -144,7 +144,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       );
 
   Widget _header(String label) => Text(label,
-      style: GoogleFonts.plusJakartaSans(
+      style: GoogleFonts.inter(
           fontSize: 11,
           fontWeight: FontWeight.w800,
           letterSpacing: 1.2,
@@ -156,7 +156,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         child: Row(children: [
           Expanded(
               child: Text(label,
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.inter(
                       fontSize: 14, color: AppColors.onSurface))),
           Switch(
               value: value,
@@ -200,7 +200,7 @@ class _SavedRouteRowState extends State<_SavedRouteRow> {
             borderRadius: BorderRadius.circular(10),
           ),
           child: Text(widget.route.routeCode,
-              style: GoogleFonts.plusJakartaSans(
+              style: GoogleFonts.inter(
                   fontWeight: FontWeight.w800,
                   fontSize: 14,
                   color: AppColors.primary)),
@@ -208,7 +208,7 @@ class _SavedRouteRowState extends State<_SavedRouteRow> {
         const SizedBox(width: AppSpacing.md),
         Expanded(
             child: Text(widget.route.name,
-                style: GoogleFonts.plusJakartaSans(
+                style: GoogleFonts.inter(
                     fontWeight: FontWeight.w600,
                     fontSize: 15,
                     color: AppColors.onSurface))),
@@ -260,12 +260,12 @@ class _TripRow extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
               Text('${trip.from} → ${trip.to}',
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.inter(
                       fontWeight: FontWeight.w700,
                       fontSize: 14,
                       color: AppColors.onSurface)),
               Text('Route ${trip.routeCode} · ${_lbl(trip.at)}',
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.inter(
                       fontSize: 12, color: AppColors.onSurfaceVariant)),
             ])),
       ]),

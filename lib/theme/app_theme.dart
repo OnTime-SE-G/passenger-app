@@ -36,10 +36,10 @@ class AppTheme {
         surfaceTintColor: Colors.transparent,
         centerTitle: false,
         systemOverlayStyle: SystemUiOverlayStyle.dark,
-        titleTextStyle: GoogleFonts.plusJakartaSans(
+        titleTextStyle: GoogleFonts.inter(
           fontSize: 18,
           fontWeight: FontWeight.w700,
-          letterSpacing: -0.02,
+          letterSpacing: -0.015,
           color: AppColors.onSurface,
         ),
       ),
@@ -57,7 +57,7 @@ class AppTheme {
           elevation: 0,
           minimumSize: const Size.fromHeight(52),
           textStyle:
-              GoogleFonts.plusJakartaSans(fontSize: 16, fontWeight: FontWeight.w700),
+              GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w700),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppSpacing.buttonRadius),
           ),
@@ -70,8 +70,8 @@ class AppTheme {
           side: BorderSide.none,
           backgroundColor: AppColors.surfaceContainerHigh,
           textStyle:
-              GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w600),
-          shape: RoundedRectangleBorder(
+              GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600),
+        shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppSpacing.buttonRadius),
           ),
         ),
@@ -84,7 +84,7 @@ class AppTheme {
           vertical: AppSpacing.md,
         ),
         hintStyle:
-            GoogleFonts.plusJakartaSans(color: AppColors.outline, fontSize: 14),
+            GoogleFonts.inter(color: AppColors.outline, fontSize: 14),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppSpacing.buttonRadius),
           borderSide: BorderSide.none,

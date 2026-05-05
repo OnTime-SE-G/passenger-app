@@ -64,7 +64,7 @@ class PrimaryButton extends StatelessWidget {
                   children: [
                     Text(
                       label,
-                      style: GoogleFonts.plusJakartaSans(
+                      style: GoogleFonts.inter(
                         fontWeight: FontWeight.w700,
                         fontSize: 16,
                       ),
@@ -115,7 +115,7 @@ class SecondaryButton extends StatelessWidget {
               Icon(icon, size: 18, color: AppColors.onSurfaceVariant),
               const SizedBox(width: AppSpacing.sm),
             ],
-            Text(label, style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600)),
+            Text(label, style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
           ],
         ),
       ),

@@ -39,7 +39,7 @@ class OnTimeLogo extends StatelessWidget {
       children: [
         Text(
           'On Time',
-          style: GoogleFonts.plusJakartaSans(
+          style: GoogleFonts.inter(
             fontSize: titleSize,
             fontWeight: FontWeight.w900,
             color: const Color(0xFF2563EB), // Blue color from the mockup
@@ -49,7 +49,7 @@ class OnTimeLogo extends StatelessWidget {
         ),
         Text(
           'PUBLIC TRANSPORT',
-          style: GoogleFonts.plusJakartaSans(
+          style: GoogleFonts.inter(
             fontSize: subtitleSize,
             fontWeight: FontWeight.w600,
             color: const Color(0xFF64748B), // Slate gray color

@@ -32,7 +32,7 @@ class RouteBadge extends StatelessWidget {
       ),
       child: Text(
         code,
-        style: GoogleFonts.plusJakartaSans(
+        style: GoogleFonts.inter(
           color: featured ? AppColors.onPrimary : AppColors.primary,
           fontWeight: FontWeight.w800,
           fontSize: featured ? 28 : size * 0.36,

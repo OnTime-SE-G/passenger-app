@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../data/demo_repository.dart';
+import '../data/api_repository.dart';
 import '../services/app_tab_controller.dart';
 import '../theme/app_colors.dart';
 import 'notifications_sheet.dart';
@@ -25,7 +25,7 @@ class GlobalHeaderActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final alertCount = DemoRepository.instance.alerts.length;
+    final alertCount = ApiRepository.instance.alerts.length;
 
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -65,7 +65,7 @@ class GlobalHeaderActions extends StatelessWidget {
                     ),
                     child: Text(
                       '$alertCount',
-                      style: GoogleFonts.plusJakartaSans(
+                      style: GoogleFonts.inter(
                         fontSize: 9,
                         fontWeight: FontWeight.w800,
                         color: Colors.white,

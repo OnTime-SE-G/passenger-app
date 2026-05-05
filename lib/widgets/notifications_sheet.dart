@@ -143,7 +143,7 @@ class _NotificationsSheetState extends State<NotificationsSheet>
                 children: [
                   Text(
                     'Notifications',
-                    style: GoogleFonts.plusJakartaSans(
+                    style: GoogleFonts.inter(
                       fontSize: 20,
                       fontWeight: FontWeight.w800,
                       color: AppColors.onSurface,
@@ -160,7 +160,7 @@ class _NotificationsSheetState extends State<NotificationsSheet>
                       ),
                       child: Text(
                         '$unreadCount Unread',
-                        style: GoogleFonts.plusJakartaSans(
+                        style: GoogleFonts.inter(
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
                           color: AppColors.primary,
@@ -184,11 +184,11 @@ class _NotificationsSheetState extends State<NotificationsSheet>
               unselectedLabelColor: AppColors.onSurfaceVariant,
               indicatorColor: AppColors.primary,
               indicatorSize: TabBarIndicatorSize.label,
-              labelStyle: GoogleFonts.plusJakartaSans(
+              labelStyle: GoogleFonts.inter(
                 fontWeight: FontWeight.w700,
                 fontSize: 14,
               ),
-              unselectedLabelStyle: GoogleFonts.plusJakartaSans(
+              unselectedLabelStyle: GoogleFonts.inter(
                 fontWeight: FontWeight.w500,
                 fontSize: 14,
               ),
@@ -207,7 +207,7 @@ class _NotificationsSheetState extends State<NotificationsSheet>
                     onTap: () => setState(() => _unreadIds.clear()),
                     child: Text(
                       'Mark all as read',
-                      style: GoogleFonts.plusJakartaSans(
+                      style: GoogleFonts.inter(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
                         color: AppColors.primary,
@@ -228,7 +228,7 @@ class _NotificationsSheetState extends State<NotificationsSheet>
                     return Center(
                       child: Text(
                         'No notifications',
-                        style: GoogleFonts.plusJakartaSans(
+                        style: GoogleFonts.inter(
                           color: AppColors.onSurfaceVariant,
                         ),
                       ),
@@ -268,7 +268,7 @@ class _NotificationsSheetState extends State<NotificationsSheet>
                     children: [
                       Text(
                         'Toggle Notifications',
-                        style: GoogleFonts.plusJakartaSans(
+                        style: GoogleFonts.inter(
                           fontWeight: FontWeight.w700,
                           fontSize: 15,
                           color: AppColors.onSurface,
@@ -297,7 +297,7 @@ class _NotificationsSheetState extends State<NotificationsSheet>
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        textStyle: GoogleFonts.plusJakartaSans(
+                        textStyle: GoogleFonts.inter(
                           fontWeight: FontWeight.w700,
                           fontSize: 15,
                         ),
@@ -394,7 +394,7 @@ class _NotifTile extends StatelessWidget {
                 children: [
                   Text(
                     item.title,
-                    style: GoogleFonts.plusJakartaSans(
+                    style: GoogleFonts.inter(
                       fontWeight: isUnread
                           ? FontWeight.w700
                           : FontWeight.w500,
@@ -407,7 +407,7 @@ class _NotifTile extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     '${item.subtitle} • ${item.time}',
-                    style: GoogleFonts.plusJakartaSans(
+                    style: GoogleFonts.inter(
                       fontSize: 12,
                       color: AppColors.onSurfaceVariant,
                     ),

@@ -3,7 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../data/demo_repository.dart';
+import '../data/api_repository.dart';
 import '../services/app_tab_controller.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
@@ -71,7 +71,7 @@ class _AppShellState extends State<AppShell> {
         currentIndex: _ctrl.index,
         tabs: _tabs,
         onTap: (i) => _ctrl.jumpTo(i),
-        alertCount: DemoRepository.instance.alerts.length,
+        alertCount: ApiRepository.instance.alerts.length,
       ),
     );
   }
@@ -209,7 +209,7 @@ class _BottomNav extends StatelessWidget {
                                         alignment: Alignment.center,
                                         child: Text(
                                           '$alertCount',
-                                          style: GoogleFonts.plusJakartaSans(
+                                          style: GoogleFonts.inter(
                                             fontSize: 8,
                                             fontWeight: FontWeight.w800,
                                             color: Colors.white,
@@ -228,7 +228,7 @@ class _BottomNav extends StatelessWidget {
                                         padding: const EdgeInsets.only(left: 6),
                                         child: Text(
                                           tab.label,
-                                          style: GoogleFonts.plusJakartaSans(
+                                          style: GoogleFonts.inter(
                                             fontSize: 13,
                                             fontWeight: FontWeight.w700,
                                             color: AppColors.primary,

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../data/demo_repository.dart';
+import '../data/api_repository.dart';
 import '../data/models.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
@@ -12,15 +12,39 @@ import '../widgets/route_badge.dart';
 import 'bus_list_screen.dart';
 
 /// Bus stop details — routes + departure actions.
-class StopDetailsScreen extends StatelessWidget {
+class StopDetailsScreen extends StatefulWidget {
   const StopDetailsScreen({super.key, required this.stop});
   final BusStop stop;
 
   @override
-  Widget build(BuildContext context) {
-    final repo = DemoRepository.instance;
-    final routes = stop.routeIds.map(repo.routeById).toList();
+  State<StopDetailsScreen> createState() => _StopDetailsScreenState();
+}
 
+class _StopDetailsScreenState extends State<StopDetailsScreen> {
+  final _repo = ApiRepository.instance;
+  List<BusRoute> _routes = [];
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRoutes();
+  }
+
+  Future<void> _loadRoutes() async {
+    // Try live API first
+    final live = await _repo.fetchRoutesForStop(widget.stop.id);
+    if (live.isNotEmpty) {
+      setState(() { _routes = live; _loading = false; });
+      return;
+    }
+    // Fall back to matching by name from loaded routes
+    final byName = widget.stop.routeIds.map(_repo.routeById).toList();
+    setState(() { _routes = byName; _loading = false; });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
@@ -28,7 +52,7 @@ class StopDetailsScreen extends StatelessWidget {
           onPressed: () => Navigator.of(context).maybePop(),
         ),
         title: Text('Stop Details',
-            style: GoogleFonts.plusJakartaSans(
+            style: GoogleFonts.inter(
               fontWeight: FontWeight.w700,
               fontSize: 18,
               color: AppColors.onSurface,
@@ -50,7 +74,7 @@ class StopDetailsScreen extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.all(AppSpacing.md),
                           decoration: BoxDecoration(
-                            color: AppColors.primaryContainer,
+                            color: AppColors.primaryContainer.withOpacity(0.2),
                             borderRadius: BorderRadius.circular(AppSpacing.md),
                           ),
                           child: const Icon(Icons.place, color: AppColors.primary, size: 24),
@@ -60,10 +84,10 @@ class StopDetailsScreen extends StatelessWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(stop.name, style: AppTypography.headline(20)),
+                              Text(widget.stop.name, style: AppTypography.headline(20)),
                               const SizedBox(height: 2),
-                              Text(stop.address,
-                                  style: GoogleFonts.plusJakartaSans(fontSize: 13, color: AppColors.onSurfaceVariant)),
+                              Text(widget.stop.address,
+                                  style: GoogleFonts.inter(fontSize: 13, color: AppColors.onSurfaceVariant)),
                             ],
                           ),
                         ),
@@ -74,7 +98,7 @@ class StopDetailsScreen extends StatelessWidget {
                     const SizedBox(height: AppSpacing.xl),
                     Text(
                       'ROUTES SERVING THIS STOP',
-                      style: GoogleFonts.plusJakartaSans(
+                      style: GoogleFonts.inter(
                         fontSize: 10,
                         fontWeight: FontWeight.w800,
                         color: AppColors.onSurfaceVariant,
@@ -82,27 +106,31 @@ class StopDetailsScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: AppSpacing.lg),
-                    ...routes.map((r) => Padding(
-                          padding: const EdgeInsets.only(bottom: AppSpacing.lg),
-                          child: Row(
-                            children: [
-                              RouteBadge(code: r.code),
-                              const SizedBox(width: AppSpacing.md),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(r.name, style: AppTypography.headline(16)),
-                                    const SizedBox(height: 2),
-                                    Text('${r.origin}  →  ${r.destination}',
-                                        style: GoogleFonts.plusJakartaSans(
-                                            fontSize: 13, color: AppColors.onSurfaceVariant)),
-                                  ],
-                                ),
+                    if (_loading)
+                      const Center(child: CircularProgressIndicator())
+                    else if (_routes.isEmpty)
+                      Text('No routes found', style: GoogleFonts.inter(color: AppColors.outline))
+                    else
+                      ..._routes.map((r) => Padding(
+                        padding: const EdgeInsets.only(bottom: AppSpacing.lg),
+                        child: Row(
+                          children: [
+                            RouteBadge(code: r.code),
+                            const SizedBox(width: AppSpacing.md),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(r.name, style: AppTypography.headline(16)),
+                                  const SizedBox(height: 2),
+                                  Text('${r.origin}  →  ${r.destination}',
+                                      style: GoogleFonts.inter(fontSize: 13, color: AppColors.onSurfaceVariant)),
+                                ],
                               ),
-                            ],
-                          ),
-                        )),
+                            ),
+                          ],
+                        ),
+                      )),
                   ],
                 ),
               ),
@@ -111,7 +139,7 @@ class StopDetailsScreen extends StatelessWidget {
                 label: 'View Buses',
                 icon: Icons.directions_bus_outlined,
                 onPressed: () => Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => BusListScreen(stop: stop)),
+                  MaterialPageRoute(builder: (_) => BusListScreen(stop: widget.stop)),
                 ),
               ),
             ],

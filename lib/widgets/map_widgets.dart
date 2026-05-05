@@ -4,18 +4,34 @@ import 'package:latlong2/latlong.dart';
 
 import '../theme/app_colors.dart';
 
-/// Light basemap — Carto Voyager (map stays readable while app chrome stays dark).
+// Mapbox token — injected at build time via:
+//   flutter run --dart-define=MAPBOX_TOKEN=pk.eyJ1...
+// Falls back to empty string (tiles won't load without a valid token).
+const String _mapboxToken = String.fromEnvironment('MAPBOX_TOKEN', defaultValue: '');
+
+/// Mapbox Streets basemap — identical style to ontime-web's tracking page.
 class AppMapTiles extends StatelessWidget {
   const AppMapTiles({super.key});
 
   @override
   Widget build(BuildContext context) {
+    if (_mapboxToken.isEmpty) {
+      // Fallback to open Carto tiles when no token is configured
+      return TileLayer(
+        urlTemplate:
+            'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+        retinaMode: MediaQuery.of(context).devicePixelRatio > 1.5,
+        userAgentPackageName: 'com.ontime.passenger_app',
+        subdomains: const ['a', 'b', 'c', 'd'],
+      );
+    }
     return TileLayer(
       urlTemplate:
-          'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+          'https://api.mapbox.com/styles/v1/mapbox/streets-v12/tiles/{z}/{x}/{y}{r}?access_token=$_mapboxToken',
       retinaMode: MediaQuery.of(context).devicePixelRatio > 1.5,
       userAgentPackageName: 'com.ontime.passenger_app',
-      subdomains: const ['a', 'b', 'c', 'd'],
+      tileSize: 512,
+      zoomOffset: -1,
     );
   }
 }

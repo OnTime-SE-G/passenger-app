@@ -39,7 +39,7 @@ class SearchField extends StatelessWidget {
       autofocus: autofocus,
       readOnly: readOnly,
       onTap: onTap,
-      style: GoogleFonts.plusJakartaSans(color: AppColors.onSurface, fontSize: 14),
+      style: GoogleFonts.inter(color: AppColors.onSurface, fontSize: 14),
       decoration: InputDecoration(
         hintText: hint,
         prefixIcon: Icon(leading, color: AppColors.onSurfaceVariant, size: 20),

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../data/demo_repository.dart';
+import '../data/api_repository.dart';
 import '../data/models.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
@@ -19,19 +19,29 @@ class NearbyBusRoutesScreen extends StatefulWidget {
 }
 
 class _NearbyBusRoutesScreenState extends State<NearbyBusRoutesScreen> {
-  final _repo = DemoRepository.instance;
+  final _repo = ApiRepository.instance;
   final _destinationFilter = TextEditingController();
   int _sortOption = 0;
-  static const _sortLabels = ['Shortest ETA', 'Distance', 'Route Number'];
+  static const _sortLabels = ['Route Name', 'Status', 'Route Number'];
+  List<_BusRowVm> _rows = [];
+  bool _loading = true;
 
-  static const _serviceTypes = [
-    'Standard AC',
-    'Express',
-    'Regular',
-    'Semi-Express',
-    'Regular',
-    'Standard AC',
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _loadBuses();
+  }
+
+  Future<void> _loadBuses() async {
+    final buses = await _repo.getLiveBuses();
+    final rows = <_BusRowVm>[];
+    for (final bus in buses) {
+      final route = _repo.routeById(bus.routeId);
+      final delayed = (bus.status ?? '').toUpperCase() == 'DELAYED';
+      rows.add(_BusRowVm(bus: bus, route: route, delayed: delayed));
+    }
+    if (mounted) setState(() { _rows = rows; _loading = false; });
+  }
 
   @override
   void dispose() {
@@ -40,41 +50,24 @@ class _NearbyBusRoutesScreenState extends State<NearbyBusRoutesScreen> {
   }
 
   List<_BusRowVm> _buildRows() {
-    final rows = <_BusRowVm>[];
-    for (var i = 0; i < _repo.buses.length; i++) {
-      final bus = _repo.buses[i];
-      final route = _repo.routeById(bus.routeId);
-      final pos = _repo.snapshotFor(bus.id);
-      final delayed = pos.status == BusLiveStatus.delayed;
-      rows.add(
-        _BusRowVm(
-          bus: bus,
-          route: route,
-          etaMinutes: pos.etaMinutes,
-          delayed: delayed,
-          serviceType: _serviceTypes[i % _serviceTypes.length],
-        ),
-      );
-    }
-
+    var rows = List<_BusRowVm>.from(_rows);
     final dest = _destinationFilter.text.trim().toLowerCase();
     if (dest.isNotEmpty) {
       rows.retainWhere(
-        (r) => r.route.destination.toLowerCase().contains(dest),
+        (r) => r.route.destination.toLowerCase().contains(dest) ||
+               r.route.name.toLowerCase().contains(dest),
       );
     }
-
     rows.sort((a, b) {
       switch (_sortOption) {
-        case 0:
-          return a.etaMinutes.compareTo(b.etaMinutes);
         case 1:
-          return a.etaMinutes.compareTo(b.etaMinutes);
-        default:
+          return a.delayed == b.delayed ? 0 : (a.delayed ? 1 : -1);
+        case 2:
           return a.route.code.compareTo(b.route.code);
+        default:
+          return a.route.name.compareTo(b.route.name);
       }
     });
-
     return rows;
   }
 
@@ -86,7 +79,9 @@ class _NearbyBusRoutesScreenState extends State<NearbyBusRoutesScreen> {
       backgroundColor: AppColors.background,
       body: SafeArea(
         bottom: false,
-        child: Column(
+        child: _loading
+            ? const Center(child: CircularProgressIndicator())
+            : Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Padding(
@@ -119,7 +114,7 @@ class _NearbyBusRoutesScreenState extends State<NearbyBusRoutesScreen> {
                 children: [
                   Text(
                     'Active Routes',
-                    style: GoogleFonts.plusJakartaSans(
+                    style: GoogleFonts.inter(
                       fontSize: 28,
                       fontWeight: FontWeight.w700,
                       letterSpacing: -0.4,
@@ -151,7 +146,7 @@ class _NearbyBusRoutesScreenState extends State<NearbyBusRoutesScreen> {
                             onSelected: (_) => setState(() => _sortOption = i),
                             selectedColor: AppColors.secondary.withOpacity(0.14),
                             showCheckmark: false,
-                            labelStyle: GoogleFonts.plusJakartaSans(
+                            labelStyle: GoogleFonts.inter(
                               fontWeight: FontWeight.w600,
                               fontSize: 13,
                               color: sel ? AppColors.secondary : AppColors.onSurface,
@@ -242,16 +237,12 @@ class _BusRowVm {
   _BusRowVm({
     required this.bus,
     required this.route,
-    required this.etaMinutes,
     required this.delayed,
-    required this.serviceType,
   });
 
   final Bus bus;
   final BusRoute route;
-  final int etaMinutes;
   final bool delayed;
-  final String serviceType;
 }
 
 class _BusRouteCard extends StatelessWidget {
@@ -289,7 +280,7 @@ class _BusRouteCard extends StatelessWidget {
             ),
             child: Text(
               row.route.code,
-              style: GoogleFonts.plusJakartaSans(
+              style: GoogleFonts.inter(
                 fontSize: 20,
                 fontWeight: FontWeight.w700,
                 color: row.delayed
@@ -305,7 +296,7 @@ class _BusRouteCard extends StatelessWidget {
               children: [
                 Text(
                   row.route.name,
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.inter(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
                     height: 1.25,
@@ -344,7 +335,7 @@ class _BusRouteCard extends StatelessWidget {
                           const SizedBox(width: 4),
                           Text(
                             row.delayed ? 'Delayed' : 'Active',
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.inter(
                               fontSize: 11,
                               fontWeight: FontWeight.w700,
                               color: row.delayed
@@ -358,27 +349,14 @@ class _BusRouteCard extends StatelessWidget {
                     Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.schedule,
+                        Icon(Icons.directions_bus,
                             size: 14, color: AppColors.onSurfaceVariant),
                         const SizedBox(width: 4),
-                        Text.rich(
-                          TextSpan(
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 12,
-                              color: AppColors.onSurfaceVariant,
-                            ),
-                            children: [
-                              const TextSpan(text: 'ETA: '),
-                              TextSpan(
-                                text: '${row.etaMinutes} mins',
-                                style: GoogleFonts.plusJakartaSans(
-                                  fontWeight: FontWeight.w700,
-                                  color: row.delayed
-                                      ? AppColors.errorBright
-                                      : AppColors.primary,
-                                ),
-                              ),
-                            ],
+                        Text(
+                          row.bus.number,
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            color: AppColors.onSurfaceVariant,
                           ),
                         ),
                       ],
@@ -416,7 +394,7 @@ class _BusRouteCard extends StatelessWidget {
                   ),
                   child: Text(
                     'Select Bus',
-                    style: GoogleFonts.plusJakartaSans(
+                    style: GoogleFonts.inter(
                       fontWeight: FontWeight.w700,
                       color: Colors.white,
                       fontSize: 14,
@@ -448,7 +426,7 @@ class _EmptyFilterState extends StatelessWidget {
           const SizedBox(height: AppSpacing.md),
           Text(
             'No Buses Found',
-            style: GoogleFonts.plusJakartaSans(
+            style: GoogleFonts.inter(
               fontSize: 18,
               fontWeight: FontWeight.w700,
             ),

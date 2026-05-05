@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../data/demo_repository.dart';
+import '../data/api_repository.dart';
 import '../data/models.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
@@ -25,7 +25,7 @@ class NearbyStopsScreen extends StatefulWidget {
 }
 
 class _NearbyStopsScreenState extends State<NearbyStopsScreen> {
-  final _repo = DemoRepository.instance;
+  final _repo = ApiRepository.instance;
   final _mapCtl = MapController();
   final _searchCtl = TextEditingController();
   BusStop? _selected;
@@ -133,7 +133,7 @@ class _NearbyStopsScreenState extends State<NearbyStopsScreen> {
                       onChanged: (v) => setState(() => _searchQuery = v),
                       decoration: InputDecoration(
                         hintText: 'Search bus stops…',
-                        hintStyle: GoogleFonts.plusJakartaSans(
+                        hintStyle: GoogleFonts.inter(
                           color: AppColors.onSurfaceVariant,
                           fontSize: 14,
                         ),
@@ -208,7 +208,7 @@ class _NearbyStopsScreenState extends State<NearbyStopsScreen> {
                           Text('Nearby stops', style: AppTypography.headline(20)),
                           const Spacer(),
                           Text('${filtered.length} found',
-                              style: GoogleFonts.plusJakartaSans(
+                              style: GoogleFonts.inter(
                                   color: AppColors.outline, fontSize: 12)),
                         ],
                       ),
@@ -281,7 +281,7 @@ class _StopTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final repo = DemoRepository.instance;
+    final repo = ApiRepository.instance;
     return AppCard(
       onTap: onTap,
       color: selected
@@ -313,14 +313,14 @@ class _StopTile extends StatelessWidget {
                 Text(stop.name,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.plusJakartaSans(
+                    style: GoogleFonts.inter(
                         fontWeight: FontWeight.w700,
                         color: AppColors.onSurface,
                         fontSize: 15)),
                 const SizedBox(height: 2),
                 Text(
                   '${meters.toStringAsFixed(0)} m · ${stop.routeIds.length} routes',
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.inter(
                       fontSize: 12, color: AppColors.outline),
                 ),
               ],

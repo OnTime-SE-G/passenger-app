@@ -3,7 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../data/demo_repository.dart';
+import '../data/api_repository.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_theme.dart';
@@ -27,7 +27,7 @@ class PassengerSearchHomeScreen extends StatefulWidget {
 }
 
 class _PassengerSearchHomeScreenState extends State<PassengerSearchHomeScreen> {
-  final _repo = DemoRepository.instance;
+  final _repo = ApiRepository.instance;
   final _mapCtl = MapController();
   final _originCtl = TextEditingController(text: 'Current Location');
   final _destinationCtl = TextEditingController();
@@ -93,7 +93,7 @@ class _PassengerSearchHomeScreenState extends State<PassengerSearchHomeScreen> {
                   children: [
                     Text(
                       'Where to?',
-                      style: GoogleFonts.plusJakartaSans(
+                      style: GoogleFonts.inter(
                         fontSize: 36,
                         fontWeight: FontWeight.w800,
                         height: 1.1,
@@ -128,7 +128,7 @@ class _PassengerSearchHomeScreenState extends State<PassengerSearchHomeScreen> {
                                 border: InputBorder.none,
                                 isDense: true,
                               ),
-                              style: GoogleFonts.plusJakartaSans(
+                              style: GoogleFonts.inter(
                                 fontWeight: FontWeight.w500,
                                 color: AppColors.onSurface,
                               ),
@@ -178,7 +178,7 @@ class _PassengerSearchHomeScreenState extends State<PassengerSearchHomeScreen> {
                                 border: InputBorder.none,
                                 isDense: true,
                               ),
-                              style: GoogleFonts.plusJakartaSans(
+                              style: GoogleFonts.inter(
                                 color: AppColors.onSurface,
                               ),
                             ),
@@ -198,7 +198,7 @@ class _PassengerSearchHomeScreenState extends State<PassengerSearchHomeScreen> {
                                 onPressed: () {},
                                 child: Text(
                                   'Options',
-                                  style: GoogleFonts.plusJakartaSans(
+                                  style: GoogleFonts.inter(
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
@@ -225,7 +225,7 @@ class _PassengerSearchHomeScreenState extends State<PassengerSearchHomeScreen> {
 
                     Text(
                       'RECENT SEARCHES',
-                      style: GoogleFonts.plusJakartaSans(
+                      style: GoogleFonts.inter(
                         fontSize: 11,
                         fontWeight: FontWeight.w800,
                         letterSpacing: 1.2,
@@ -276,7 +276,7 @@ class _PassengerSearchHomeScreenState extends State<PassengerSearchHomeScreen> {
                                       children: [
                                         Text(
                                           '${r.from} → ${r.to}',
-                                          style: GoogleFonts.plusJakartaSans(
+                                          style: GoogleFonts.inter(
                                             fontWeight: FontWeight.w700,
                                             fontSize: 15,
                                           ),
@@ -368,7 +368,7 @@ class _PassengerSearchHomeScreenState extends State<PassengerSearchHomeScreen> {
                                         Expanded(
                                           child: Text.rich(
                                             TextSpan(
-                                              style: GoogleFonts.plusJakartaSans(
+                                              style: GoogleFonts.inter(
                                                 fontSize: 13,
                                                 fontWeight: FontWeight.w700,
                                                 color: AppColors.onSurface,

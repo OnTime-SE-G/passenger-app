@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../data/demo_repository.dart';
+import '../data/api_repository.dart';
 import '../data/models.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
@@ -21,12 +21,31 @@ class BusListScreen extends StatefulWidget {
 }
 
 class _BusListScreenState extends State<BusListScreen> {
-  final _repo = DemoRepository.instance;
+  final _repo = ApiRepository.instance;
   String _query = '';
   String _activeFilter = 'All';
+  List<Bus> _allBuses = [];
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadBuses();
+  }
+
+  Future<void> _loadBuses() async {
+    // Fetch routes for this stop, then buses for each route
+    final routes = await _repo.fetchRoutesForStop(widget.stop.id);
+    final buses = <Bus>[];
+    for (final r in routes) {
+      final rb = await _repo.fetchBusesForRoute(r.id);
+      buses.addAll(rb);
+    }
+    if (mounted) setState(() { _allBuses = buses; _loading = false; });
+  }
 
   List<Bus> get _buses {
-    var list = _repo.busesForStop(widget.stop.id);
+    var list = List<Bus>.from(_allBuses);
     if (_query.isNotEmpty) {
       final q = _query.toLowerCase();
       list = list.where((b) {
@@ -38,14 +57,13 @@ class _BusListScreenState extends State<BusListScreen> {
     }
     if (_activeFilter != 'All') {
       list = list.where((b) {
-        final s = _repo.snapshotFor(b.id).status;
         switch (_activeFilter) {
           case 'On time':
-            return s == BusLiveStatus.onTime;
+            return b.status == 'ON_TIME' || b.status == 'RUNNING';
           case 'Delayed':
-            return s == BusLiveStatus.delayed;
+            return b.status == 'DELAYED';
           case 'Arriving':
-            return s == BusLiveStatus.arriving;
+            return b.status == 'ARRIVING';
         }
         return true;
       }).toList();
@@ -68,7 +86,7 @@ class _BusListScreenState extends State<BusListScreen> {
           children: [
             Text(
               'Buses at',
-              style: GoogleFonts.plusJakartaSans(
+              style: GoogleFonts.inter(
                 fontWeight: FontWeight.w700,
                 fontSize: 16,
                 color: AppColors.onSurface,
@@ -76,7 +94,7 @@ class _BusListScreenState extends State<BusListScreen> {
             ),
             Text(
               widget.stop.name,
-              style: GoogleFonts.plusJakartaSans(
+              style: GoogleFonts.inter(
                 fontSize: 13,
                 color: AppColors.onSurfaceVariant,
               ),
@@ -106,7 +124,9 @@ class _BusListScreenState extends State<BusListScreen> {
             ),
             const SizedBox(height: AppSpacing.md),
             Expanded(
-              child: _buses.isEmpty
+              child: _loading
+                  ? const Center(child: CircularProgressIndicator())
+                  : _buses.isEmpty
                   ? Center(
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
@@ -119,7 +139,7 @@ class _BusListScreenState extends State<BusListScreen> {
                           const SizedBox(height: AppSpacing.md),
                           Text(
                             'No buses match',
-                            style: GoogleFonts.plusJakartaSans(color: AppColors.outline),
+                            style: GoogleFonts.inter(color: AppColors.outline),
                           ),
                         ],
                       ),
@@ -151,10 +171,9 @@ class BusTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final repo = DemoRepository.instance;
+    final repo = ApiRepository.instance;
     final route = repo.routeById(bus.routeId);
-    final pos = repo.snapshotFor(bus.id);
-    final status = _mapStatus(pos.status);
+    final statusLabel = _statusLabel(bus.status);
 
     return AppCard(
       onTap: () => Navigator.of(context).push(
@@ -176,48 +195,38 @@ class BusTile extends StatelessWidget {
                   children: [
                     Expanded(
                       child: Text(
-                        route.name,
+                        route.name.isNotEmpty ? route.name : bus.routeId,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.plusJakartaSans(
+                        style: GoogleFonts.inter(
                           fontSize: 15,
                           fontWeight: FontWeight.w700,
                           color: AppColors.onSurface,
                         ),
                       ),
                     ),
-                    StatusChip(status: status, dense: true),
+                    StatusChip(status: statusLabel, dense: true),
                   ],
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  '${route.origin}  →  ${route.destination}',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 12,
-                    color: AppColors.outline,
+                if (route.origin.isNotEmpty)
+                  Text(
+                    '${route.origin}  →  ${route.destination}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      color: AppColors.outline,
+                    ),
                   ),
-                ),
                 const SizedBox(height: AppSpacing.sm),
                 Row(
                   children: [
-                    Icon(Icons.schedule, size: 14, color: AppColors.outline),
-                    const SizedBox(width: 4),
-                    Text(
-                      '${pos.etaMinutes} min',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.onSurface,
-                      ),
-                    ),
-                    const SizedBox(width: AppSpacing.md),
                     Icon(Icons.tag, size: 14, color: AppColors.outline),
                     const SizedBox(width: 4),
                     Text(
                       bus.number,
-                      style: GoogleFonts.plusJakartaSans(
+                      style: GoogleFonts.inter(
                         fontSize: 13,
                         color: AppColors.onSurfaceVariant,
                       ),
@@ -233,16 +242,16 @@ class BusTile extends StatelessWidget {
   }
 }
 
-BusStatus _mapStatus(BusLiveStatus s) {
-  switch (s) {
-    case BusLiveStatus.onTime:
-      return BusStatus.onTime;
-    case BusLiveStatus.delayed:
+BusStatus _statusLabel(String? status) {
+  switch ((status ?? '').toUpperCase()) {
+    case 'DELAYED':
       return BusStatus.delayed;
-    case BusLiveStatus.arriving:
+    case 'ARRIVING':
       return BusStatus.arriving;
-    case BusLiveStatus.cancelled:
+    case 'CANCELLED':
       return BusStatus.cancelled;
+    default:
+      return BusStatus.onTime;
   }
 }
 
@@ -281,7 +290,7 @@ class _FilterChips extends StatelessWidget {
               child: Center(
                 child: Text(
                   f,
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.inter(
                     color: selected
                         ? AppColors.onSecondaryContainer
                         : AppColors.onSurfaceVariant,

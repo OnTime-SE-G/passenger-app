@@ -7,13 +7,13 @@ import 'package:latlong2/latlong.dart';
 // Physical device: flutter run --dart-define=G2_BASE_URL=http://192.168.x.x:8000
 const String _base = String.fromEnvironment(
   'G2_BASE_URL',
-  defaultValue: 'http://localhost:8000',
+  defaultValue: 'https://api.on-time.live',
 );
 
 // WebSocket service
 const String wsBase = String.fromEnvironment(
   'G2_WS_URL',
-  defaultValue: 'ws://localhost:8004',
+  defaultValue: 'wss://api.on-time.live',
 );
 
 class ApiService {

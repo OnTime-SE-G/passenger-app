@@ -63,21 +63,19 @@ Tokens live in `lib/theme/` — copy verbatim into the **Driver App** to stay pi
 
 ---
 
-## Demo Database
+## Backend data
 
-`lib/data/demo_repository.dart` — in-memory singleton, no network needed.
+`lib/data/api_repository.dart` — singleton that loads stops, routes, and live
+buses from the **G2 HTTP API** (`G2_BASE_URL`, default `https://api.on-time.live`)
+and live positions from the **WebSocket** (`G2_WS_URL`). See comments in
+`lib/services/api_service.dart` for local/dev `--dart-define` overrides.
 
 ```dart
-DemoRepository.instance.stops              // List<BusStop>
-DemoRepository.instance.routes             // List<BusRoute>
-DemoRepository.instance.nearbyStops(point) // sorted by distance
-DemoRepository.instance.busesForStop(id)
-DemoRepository.instance.watchBus(busId)    // Stream<BusPosition> every ~1.2s
-DemoRepository.instance.snapshotFor(busId) // one-shot for lists
+ApiRepository.instance.initialize()  // call once at startup
+ApiRepository.instance.stops
+ApiRepository.instance.routes
+ApiRepository.instance.watchBus(busId)
 ```
-
-**Swap to Postgres:** implement the same method signatures backed by
-`LISTEN/NOTIFY` or WebSocket — zero screen changes required.
 
 ---
 
@@ -149,7 +147,7 @@ passenger_app/
 │   ├── main.dart                  # App entry point → SplashScreen
 │   ├── data/
 │   │   ├── models.dart            # BusStop, BusRoute, Bus, BusPosition
-│   │   └── demo_repository.dart   # In-memory DB + live streams
+│   │   └── api_repository.dart   # G2 API + WebSocket
 │   ├── theme/
 │   │   ├── app_colors.dart        # Full color token set
 │   │   ├── app_spacing.dart       # Spacing + radius constants
@@ -194,7 +192,7 @@ AppShell (bottom nav: Home | Live Map | Routes | Alerts | Profile)
 
 ## Roadmap
 
-- [ ] Connect to central Postgres database (replace `DemoRepository`)
+- [ ] Persist favourites / recent trips (backend or local store)
 - [ ] Driver App (shared design system already in place)
 - [ ] Push notifications for ETA alerts
 - [ ] Google Maps SDK integration (swap tile provider)

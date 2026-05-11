@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../theme/app_colors.dart';
-
 /// OnTime brand logo widget — blue wordmark with 'PUBLIC TRANSPORT' subtitle.
 class OnTimeLogo extends StatelessWidget {
   const OnTimeLogo({

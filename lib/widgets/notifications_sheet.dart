@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../theme/app_colors.dart';
-import '../theme/app_spacing.dart';
 
 /// Mirrors the web notification panel popup.
 /// Call [NotificationsSheet.show] to open it as a modal bottom sheet.
@@ -29,60 +28,9 @@ class _NotificationsSheetState extends State<NotificationsSheet>
       TabController(length: 4, vsync: this);
 
   bool _toggleNotifications = true;
-  final _unreadIds = {0, 1}; // indices of unread items
+  final _notifications = <_NotifItem>[];
 
-  final _notifications = [
-    _NotifItem(
-      icon: Icons.directions_bus_rounded,
-      iconBg: const Color(0xFFEFF6FF),
-      iconColor: const Color(0xFF2563EB),
-      title: 'Bus 120 arriving in 5 minutes',
-      subtitle: 'Central Station',
-      time: '2 mins ago',
-      accent: const Color(0xFF2563EB),
-      tag: 'arrival',
-    ),
-    _NotifItem(
-      icon: Icons.warning_amber_rounded,
-      iconBg: const Color(0xFFFEF2F2),
-      iconColor: const Color(0xFFDC2626),
-      title: 'Bus 138 delayed by 10 minutes',
-      subtitle: 'North Route',
-      time: '15 mins ago',
-      accent: const Color(0xFFDC2626),
-      tag: 'delay',
-    ),
-    _NotifItem(
-      icon: Icons.route_rounded,
-      iconBg: const Color(0xFFF5F3FF),
-      iconColor: const Color(0xFF7C3AED),
-      title: 'Route 101 has been updated',
-      subtitle: 'System Update',
-      time: '1 hr ago',
-      accent: null,
-      tag: 'update',
-    ),
-    _NotifItem(
-      icon: Icons.directions_bus_outlined,
-      iconBg: const Color(0xFFF0FDF4),
-      iconColor: const Color(0xFF059669),
-      title: 'Your bus is now active on road',
-      subtitle: 'Dispatch',
-      time: '2 hrs ago',
-      accent: null,
-      tag: 'update',
-    ),
-    _NotifItem(
-      icon: Icons.check_circle_rounded,
-      iconBg: const Color(0xFFF0FDF4),
-      iconColor: const Color(0xFF059669),
-      title: 'Trip completed successfully',
-      subtitle: 'System Log',
-      time: '3 hrs ago',
-      accent: null,
-      tag: 'update',
-    ),
-  ];
+  final _unreadIds = <int>{};
 
   List<_NotifItem> _filtered(String tab) {
     switch (tab) {

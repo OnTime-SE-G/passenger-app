@@ -62,15 +62,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                          Text('Passenger',
+                          Text('Account',
                               style: GoogleFonts.inter(
                                   fontWeight: FontWeight.w700,
                                   fontSize: 22,
                                   color: AppColors.onSurface)),
-                          Text('Colombo, Sri Lanka',
-                              style: GoogleFonts.inter(
-                                  fontSize: 13,
-                                  color: AppColors.onSurfaceVariant)),
                         ])),
                     OutlinedButton.icon(
                       onPressed: () {},
@@ -91,19 +87,33 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 // Saved Routes
                 _header('SAVED ROUTES'),
                 const SizedBox(height: AppSpacing.sm),
-                for (final r in _repo.savedRoutes) ...[
-                  _SavedRouteRow(route: r),
-                  const SizedBox(height: AppSpacing.sm),
-                ],
+                if (_repo.savedRoutes.isEmpty)
+                  Text(
+                    'No saved routes yet.',
+                    style: GoogleFonts.inter(
+                        fontSize: 14, color: AppColors.onSurfaceVariant),
+                  )
+                else
+                  for (final r in _repo.savedRoutes) ...[
+                    _SavedRouteRow(route: r),
+                    const SizedBox(height: AppSpacing.sm),
+                  ],
                 const SizedBox(height: AppSpacing.xl),
 
                 // Recent Trips
                 _header('RECENT TRIPS'),
                 const SizedBox(height: AppSpacing.sm),
-                for (final t in _repo.recentTrips) ...[
-                  _TripRow(trip: t),
-                  const SizedBox(height: AppSpacing.sm),
-                ],
+                if (_repo.recentTrips.isEmpty)
+                  Text(
+                    'No recent trips yet.',
+                    style: GoogleFonts.inter(
+                        fontSize: 14, color: AppColors.onSurfaceVariant),
+                  )
+                else
+                  for (final t in _repo.recentTrips) ...[
+                    _TripRow(trip: t),
+                    const SizedBox(height: AppSpacing.sm),
+                  ],
                 const SizedBox(height: AppSpacing.xl),
 
                 // Preferences

@@ -15,9 +15,8 @@ import '../widgets/ontime_logo.dart';
 import '../widgets/notifications_sheet.dart';
 import '../services/app_tab_controller.dart';
 import 'nearby_stops_screen.dart';
-import 'profile_screen.dart';
 
-/// Search home — origin / destination card + Voyager preview + recent routes.
+/// Search home: origin / destination card, map preview, recent searches.
 class PassengerSearchHomeScreen extends StatefulWidget {
   const PassengerSearchHomeScreen({super.key});
 
@@ -29,7 +28,7 @@ class PassengerSearchHomeScreen extends StatefulWidget {
 class _PassengerSearchHomeScreenState extends State<PassengerSearchHomeScreen> {
   final _repo = ApiRepository.instance;
   final _mapCtl = MapController();
-  final _originCtl = TextEditingController(text: 'Current Location');
+  final _originCtl = TextEditingController();
   final _destinationCtl = TextEditingController();
 
   @override
@@ -151,8 +150,8 @@ class _PassengerSearchHomeScreenState extends State<PassengerSearchHomeScreen> {
                                     final origin = _originCtl.text;
                                     final dest = _destinationCtl.text;
                                     setState(() {
-                                      _originCtl.text = dest.isNotEmpty ? dest : 'Current Location';
-                                      _destinationCtl.text = origin == 'Current Location' ? '' : origin;
+                                      _originCtl.text = dest;
+                                      _destinationCtl.text = origin;
                                     });
                                   },
                                   child: CircleAvatar(
@@ -221,83 +220,84 @@ class _PassengerSearchHomeScreenState extends State<PassengerSearchHomeScreen> {
                       ),
                     ),
 
-                    const SizedBox(height: AppSpacing.xxl),
-
-                    Text(
-                      'RECENT SEARCHES',
-                      style: GoogleFonts.inter(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 1.2,
-                        color: AppColors.onSurfaceVariant,
+                    if (_repo.recentSearches.isNotEmpty) ...[
+                      const SizedBox(height: AppSpacing.xxl),
+                      Text(
+                        'RECENT SEARCHES',
+                        style: GoogleFonts.inter(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 1.2,
+                          color: AppColors.onSurfaceVariant,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-                    ..._repo.recentSearches.map(
-                      (r) => Padding(
-                        padding: const EdgeInsets.only(bottom: AppSpacing.md),
-                        child: Material(
-                          color: Colors.transparent,
-                          child: InkWell(
-                            borderRadius:
-                                BorderRadius.circular(AppSpacing.cardRadius),
-                            onTap: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute<void>(
-                                  builder: (_) => const NearbyStopsScreen(),
-                                ),
-                              );
-                            },
-                            child: Ink(
-                              decoration: BoxDecoration(
-                                color: AppColors.surfaceContainerLowest,
-                                borderRadius: BorderRadius.circular(
-                                  AppSpacing.cardRadius,
-                                ),
-                                boxShadow: kAmbientShadow,
-                              ),
-                              padding: const EdgeInsets.all(AppSpacing.lg),
-                              child: Row(
-                                children: [
-                                  CircleAvatar(
-                                    backgroundColor:
-                                        AppColors.surfaceContainer,
-                                    child: Icon(
-                                      Icons.history,
-                                      color: AppColors.onSurfaceVariant,
-                                      size: 20,
-                                    ),
+                      const SizedBox(height: AppSpacing.md),
+                      ..._repo.recentSearches.map(
+                        (r) => Padding(
+                          padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              borderRadius:
+                                  BorderRadius.circular(AppSpacing.cardRadius),
+                              onTap: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute<void>(
+                                    builder: (_) => const NearbyStopsScreen(),
                                   ),
-                                  const SizedBox(width: AppSpacing.md),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          '${r.from} → ${r.to}',
-                                          style: GoogleFonts.inter(
-                                            fontWeight: FontWeight.w700,
-                                            fontSize: 15,
+                                );
+                              },
+                              child: Ink(
+                                decoration: BoxDecoration(
+                                  color: AppColors.surfaceContainerLowest,
+                                  borderRadius: BorderRadius.circular(
+                                    AppSpacing.cardRadius,
+                                  ),
+                                  boxShadow: kAmbientShadow,
+                                ),
+                                padding: const EdgeInsets.all(AppSpacing.lg),
+                                child: Row(
+                                  children: [
+                                    CircleAvatar(
+                                      backgroundColor:
+                                          AppColors.surfaceContainer,
+                                      child: Icon(
+                                        Icons.history,
+                                        color: AppColors.onSurfaceVariant,
+                                        size: 20,
+                                      ),
+                                    ),
+                                    const SizedBox(width: AppSpacing.md),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            '${r.from} → ${r.to}',
+                                            style: GoogleFonts.inter(
+                                              fontWeight: FontWeight.w700,
+                                              fontSize: 15,
+                                            ),
                                           ),
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          'Saved route · tap to open stops',
-                                          style: AppTypography.body(13),
-                                        ),
-                                      ],
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            'Saved route · tap to open stops',
+                                            style: AppTypography.body(13),
+                                          ),
+                                        ],
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
                             ),
                           ),
                         ),
                       ),
-                    ),
-
-                    const SizedBox(height: AppSpacing.xl),
+                      const SizedBox(height: AppSpacing.xl),
+                    ] else
+                      const SizedBox(height: AppSpacing.xxl),
 
                     // Map preview — asymmetric column second half on web; stacked on mobile.
                     ClipRRect(
@@ -356,32 +356,13 @@ class _PassengerSearchHomeScreenState extends State<PassengerSearchHomeScreen> {
                                     decoration: glassPanelDecoration(radius: 12),
                                     child: Row(
                                       children: [
-                                        Container(
-                                          width: 8,
-                                          height: 8,
-                                          decoration: const BoxDecoration(
-                                            color: AppColors.success,
-                                            shape: BoxShape.circle,
-                                          ),
-                                        ),
-                                        const SizedBox(width: AppSpacing.sm),
                                         Expanded(
-                                          child: Text.rich(
-                                            TextSpan(
-                                              style: GoogleFonts.inter(
-                                                fontSize: 13,
-                                                fontWeight: FontWeight.w700,
-                                                color: AppColors.onSurface,
-                                              ),
-                                              children: const [
-                                                TextSpan(text: 'Live Network: '),
-                                                TextSpan(
-                                                  text: 'Good Service',
-                                                  style: TextStyle(
-                                                    color: AppColors.success,
-                                                  ),
-                                                ),
-                                              ],
+                                          child: Text(
+                                            'Map preview',
+                                            style: GoogleFonts.inter(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w600,
+                                              color: AppColors.onSurfaceVariant,
                                             ),
                                           ),
                                         ),

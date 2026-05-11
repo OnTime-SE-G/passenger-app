@@ -12,7 +12,7 @@ void main() {
   // Suppress harmless web startup discard warnings by increasing the buffer size
   ui.channelBuffers.resize('flutter/lifecycle', 100);
   WidgetsFlutterBinding.ensureInitialized();
-  // Pre-load stops, routes, and buses from the API (falls back to demo data on failure).
+  // Pre-load stops, routes, and buses from the API.
   unawaited(ApiRepository.instance.initialize());
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(

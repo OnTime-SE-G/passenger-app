@@ -3,6 +3,8 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
+
 import '../data/api_repository.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
@@ -13,6 +15,7 @@ import '../widgets/map_widgets.dart';
 import '../widgets/primary_button.dart';
 import '../widgets/ontime_logo.dart';
 import '../widgets/notifications_sheet.dart';
+import '../widgets/sheet_handle.dart';
 import '../services/app_tab_controller.dart';
 import 'nearby_stops_screen.dart';
 
@@ -30,6 +33,13 @@ class _PassengerSearchHomeScreenState extends State<PassengerSearchHomeScreen> {
   final _mapCtl = MapController();
   final _originCtl = TextEditingController();
   final _destinationCtl = TextEditingController();
+
+  /// `null` means depart as soon as possible ("Leave now").
+  DateTime? _departureAt;
+
+  bool _preferFewerTransfers = false;
+  bool _preferLessWalking = false;
+  bool _wheelchairAccessible = false;
 
   @override
   void dispose() {
@@ -187,14 +197,14 @@ class _PassengerSearchHomeScreenState extends State<PassengerSearchHomeScreen> {
                             children: [
                               Expanded(
                                 child: OutlinedButton.icon(
-                                  onPressed: () {},
+                                  onPressed: _showDepartureSheet,
                                   icon: const Icon(Icons.schedule, size: 18),
-                                  label: const Text('Leave Now'),
+                                  label: Text(_departureButtonLabel),
                                 ),
                               ),
                               const SizedBox(width: AppSpacing.sm),
                               TextButton(
-                                onPressed: () {},
+                                onPressed: _showRouteOptionsSheet,
                                 child: Text(
                                   'Options',
                                   style: GoogleFonts.inter(
@@ -209,9 +219,13 @@ class _PassengerSearchHomeScreenState extends State<PassengerSearchHomeScreen> {
                             label: 'Search Route',
                             icon: Icons.arrow_forward,
                             onPressed: () {
+                              final dest = _destinationCtl.text.trim();
                               Navigator.of(context).push(
                                 MaterialPageRoute<void>(
-                                  builder: (_) => const NearbyStopsScreen(),
+                                  builder: (_) => NearbyStopsScreen(
+                                    destinationQuery:
+                                        dest.isEmpty ? null : dest,
+                                  ),
                                 ),
                               );
                             },
@@ -389,6 +403,206 @@ class _PassengerSearchHomeScreenState extends State<PassengerSearchHomeScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  String get _departureButtonLabel {
+    if (_departureAt == null) return 'Leave Now';
+    final d = _departureAt!;
+    final today = DateTime.now();
+    if (d.year == today.year &&
+        d.month == today.month &&
+        d.day == today.day) {
+      return 'Depart ${DateFormat.jm().format(d)}';
+    }
+    return 'Depart ${DateFormat('EEE MMM d, h:mm a').format(d)}';
+  }
+
+  Future<void> _pickScheduledDeparture() async {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final date = await showDatePicker(
+      context: context,
+      initialDate: (_departureAt ?? now).isBefore(today) ? today : (_departureAt ?? now),
+      firstDate: today,
+      lastDate: today.add(const Duration(days: 365)),
+    );
+    if (date == null || !mounted) return;
+    final time = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(_departureAt ?? now),
+    );
+    if (time == null || !mounted) return;
+    setState(() {
+      _departureAt = DateTime(
+        date.year,
+        date.month,
+        date.day,
+        time.hour,
+        time.minute,
+      );
+    });
+  }
+
+  Future<void> _showDepartureSheet() async {
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: AppColors.surfaceContainerLowest,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(AppSpacing.cardRadius),
+        ),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.lg,
+            AppSpacing.sm,
+            AppSpacing.lg,
+            AppSpacing.xl,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const SheetHandle(),
+              Text(
+                'When are you leaving?',
+                style: GoogleFonts.inter(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 18,
+                  color: AppColors.onSurface,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(Icons.flash_on_outlined),
+                title: Text(
+                  'Leave now',
+                  style: GoogleFonts.inter(fontWeight: FontWeight.w600),
+                ),
+                subtitle: Text(
+                  'Best routes for immediate departure',
+                  style: GoogleFonts.inter(
+                    fontSize: 13,
+                    color: AppColors.onSurfaceVariant,
+                  ),
+                ),
+                onTap: () {
+                  setState(() => _departureAt = null);
+                  Navigator.pop(ctx);
+                },
+              ),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(Icons.event_outlined),
+                title: Text(
+                  'Choose date & time',
+                  style: GoogleFonts.inter(fontWeight: FontWeight.w600),
+                ),
+                onTap: () async {
+                  Navigator.pop(ctx);
+                  await _pickScheduledDeparture();
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showRouteOptionsSheet() async {
+    var fewer = _preferFewerTransfers;
+    var walking = _preferLessWalking;
+    var access = _wheelchairAccessible;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.surfaceContainerLowest,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(AppSpacing.cardRadius),
+        ),
+      ),
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setModal) {
+          return SafeArea(
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(
+                AppSpacing.lg,
+                AppSpacing.sm,
+                AppSpacing.lg,
+                MediaQuery.paddingOf(context).bottom + AppSpacing.lg,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const SheetHandle(),
+                  Text(
+                    'Route options',
+                    style: GoogleFonts.inter(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 18,
+                      color: AppColors.onSurface,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  Text(
+                    'Preferences for upcoming trip planning.',
+                    style: GoogleFonts.inter(
+                      fontSize: 13,
+                      color: AppColors.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text('Fewer transfers', style: GoogleFonts.inter()),
+                    value: fewer,
+                    onChanged: (v) => setModal(() => fewer = v),
+                  ),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text('Less walking', style: GoogleFonts.inter()),
+                    value: walking,
+                    onChanged: (v) => setModal(() => walking = v),
+                  ),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text('Wheelchair-accessible', style: GoogleFonts.inter()),
+                    value: access,
+                    onChanged: (v) => setModal(() => access = v),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  FilledButton(
+                    onPressed: () {
+                      setState(() {
+                        _preferFewerTransfers = fewer;
+                        _preferLessWalking = walking;
+                        _wheelchairAccessible = access;
+                      });
+                      Navigator.pop(ctx);
+                    },
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: AppColors.onPrimary,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                    ),
+                    child: Text(
+                      'Done',
+                      style: GoogleFonts.inter(fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }

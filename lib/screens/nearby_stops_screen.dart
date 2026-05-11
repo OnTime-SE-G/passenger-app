@@ -41,6 +41,11 @@ class _NearbyStopsScreenState extends State<NearbyStopsScreen> {
   @override
   void initState() {
     super.initState();
+    final q = widget.destinationQuery?.trim();
+    if (q != null && q.isNotEmpty) {
+      _searchQuery = q;
+      _searchCtl.text = q;
+    }
     final n = _repo.nearbyStops(_repo.userLocation);
     if (n.isNotEmpty) _selected = n.first.stop;
   }

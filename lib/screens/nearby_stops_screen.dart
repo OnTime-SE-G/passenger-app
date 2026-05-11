@@ -160,7 +160,11 @@ class _NearbyStopsScreenState extends State<NearbyStopsScreen> {
                     ),
                   ),
                   GlobalHeaderActions(
-                    onRefresh: () => setState(() {}),
+                    onRefresh: () {
+                      _repo.refresh().then((_) {
+                        if (context.mounted) setState(() {});
+                      });
+                    },
                     onNotifications: () {},
                     onSettings: () {},
                   ),

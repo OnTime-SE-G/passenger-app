@@ -32,7 +32,17 @@ class _AlertsScreenState extends State<AlertsScreen> {
     if (mounted) setState(() { _alerts = loaded; _refreshing = false; });
   }
 
-  Future<void> _refresh() => _loadAlerts();
+  Future<void> _refresh() async {
+    if (mounted) setState(() => _refreshing = true);
+    await _repo.refresh();
+    final loaded = await _repo.fetchAlerts();
+    if (mounted) {
+      setState(() {
+        _alerts = loaded;
+        _refreshing = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {

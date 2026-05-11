@@ -36,6 +36,20 @@ class ApiRepository {
     _loaded = true;
   }
 
+  /// Reloads stops, routes, and live buses from the API.
+  Future<void> refresh() async {
+    try {
+      await _loadStops();
+    } catch (_) {}
+    try {
+      await _loadRoutes();
+    } catch (_) {}
+    try {
+      await _loadBuses();
+    } catch (_) {}
+    _loaded = true;
+  }
+
   Future<void> _loadStops() async {
     final raw = await _api.getAllStops();
     _stops = raw

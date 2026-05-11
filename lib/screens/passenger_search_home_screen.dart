@@ -76,7 +76,11 @@ class _PassengerSearchHomeScreenState extends State<PassengerSearchHomeScreen> {
                       ),
                     ),
                     GlobalHeaderActions(
-                      onRefresh: () => setState(() {}),
+                      onRefresh: () {
+                        ApiRepository.instance.refresh().then((_) {
+                          if (context.mounted) setState(() {});
+                        });
+                      },
                       onNotifications: () {
                         showModalBottomSheet(
                           context: context,

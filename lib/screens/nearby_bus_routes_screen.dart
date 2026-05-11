@@ -21,6 +21,7 @@ class NearbyBusRoutesScreen extends StatefulWidget {
 class _NearbyBusRoutesScreenState extends State<NearbyBusRoutesScreen> {
   final _repo = ApiRepository.instance;
   final _destinationFilter = TextEditingController();
+  final _filterFocus = FocusNode();
   int _sortOption = 0;
   static const _sortLabels = ['Route Name', 'Status', 'Route Number'];
   List<_BusRowVm> _rows = [];
@@ -46,6 +47,7 @@ class _NearbyBusRoutesScreenState extends State<NearbyBusRoutesScreen> {
   @override
   void dispose() {
     _destinationFilter.dispose();
+    _filterFocus.dispose();
     super.dispose();
   }
 
@@ -98,7 +100,10 @@ class _NearbyBusRoutesScreenState extends State<NearbyBusRoutesScreen> {
                   IconButton(
                     icon: const Icon(Icons.search),
                     color: AppColors.navInactive,
-                    onPressed: () {},
+                    tooltip: 'Search routes',
+                    onPressed: () {
+                      _filterFocus.requestFocus();
+                    },
                   ),
                 ],
               ),
@@ -180,6 +185,7 @@ class _NearbyBusRoutesScreenState extends State<NearbyBusRoutesScreen> {
                         Expanded(
                           child: TextField(
                             controller: _destinationFilter,
+                            focusNode: _filterFocus,
                             onChanged: (_) => setState(() {}),
                             decoration: const InputDecoration(
                               hintText:

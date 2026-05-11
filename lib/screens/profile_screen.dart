@@ -34,7 +34,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 fontSize: 20,
                 color: AppColors.onSurface)),
         actions: [
-          GlobalHeaderActions(onRefresh: () => setState(() {})),
+          GlobalHeaderActions(
+            onRefresh: () {
+              _repo.refresh().then((_) {
+                if (context.mounted) setState(() {});
+              });
+            },
+          ),
         ],
       ),
       body: SingleChildScrollView(

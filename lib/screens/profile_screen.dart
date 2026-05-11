@@ -28,7 +28,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         elevation: 0,
         scrolledUnderElevation: 0,
         automaticallyImplyLeading: false,
-        title: Text('Profile',
+        title: Text('Settings',
             style: GoogleFonts.inter(
                 fontWeight: FontWeight.w700,
                 fontSize: 20,
@@ -49,41 +49,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // User card
-                _card(
-                  Row(children: [
-                    CircleAvatar(
-                        radius: 36,
-                        backgroundColor: AppColors.primary,
-                        child: const Icon(Icons.person_rounded,
-                            color: Colors.white, size: 36)),
-                    const SizedBox(width: AppSpacing.lg),
-                    Expanded(
-                        child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                          Text('Account',
-                              style: GoogleFonts.inter(
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 22,
-                                  color: AppColors.onSurface)),
-                        ])),
-                    OutlinedButton.icon(
-                      onPressed: () {},
-                      icon: const Icon(Icons.edit_outlined, size: 16),
-                      label: const Text('Edit'),
-                      style: OutlinedButton.styleFrom(
-                          minimumSize: const Size(0, 36),
-                          foregroundColor: AppColors.primary,
-                          side: BorderSide(
-                              color: AppColors.primary.withOpacity(0.4)),
-                          textStyle: GoogleFonts.inter(
-                              fontWeight: FontWeight.w700, fontSize: 13)),
-                    ),
-                  ]),
-                ),
-                const SizedBox(height: AppSpacing.xl),
-
                 // Saved Routes
                 _header('SAVED ROUTES'),
                 const SizedBox(height: AppSpacing.sm),

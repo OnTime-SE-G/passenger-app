@@ -7,21 +7,21 @@ import '../theme/app_colors.dart';
 import 'notifications_sheet.dart';
 
 /// Shared top-right action trio that mirrors the web reference:
-/// [Refresh]  [Bell w/ badge]  [Profile avatar]
+/// [Refresh]  [Bell w/ badge]  [Settings]
 ///
 /// • Bell  → opens the Notifications bottom sheet (web-style panel)
-/// • Avatar → jumps to the Profile tab via AppTabController
+/// • Settings → jumps to the Settings tab via AppTabController
 class GlobalHeaderActions extends StatelessWidget {
   const GlobalHeaderActions({
     super.key,
     required this.onRefresh,
     this.onNotifications, // optional override; defaults to sheet
-    this.onProfile,       // optional override; defaults to tab jump
+    this.onSettings,    // optional override; defaults to tab jump
   });
 
   final VoidCallback onRefresh;
   final VoidCallback? onNotifications;
-  final VoidCallback? onProfile;
+  final VoidCallback? onSettings;
 
   @override
   Widget build(BuildContext context) {
@@ -78,19 +78,19 @@ class GlobalHeaderActions extends StatelessWidget {
           ],
         ),
 
-        // ── Profile avatar → Profile tab ──────────────────────────
+        // ── Settings → Settings tab ─────────────────────────────────
         Padding(
           padding: const EdgeInsets.only(right: 8),
           child: Tooltip(
-            message: 'Profile',
+            message: 'Settings',
             child: GestureDetector(
-              onTap: onProfile ??
+              onTap: onSettings ??
                   () => AppTabController.instance.jumpTo(5),
               child: CircleAvatar(
                 radius: 16,
                 backgroundColor: AppColors.primary.withOpacity(0.15),
                 child: Icon(
-                  Icons.person_rounded,
+                  Icons.settings_rounded,
                   size: 18,
                   color: AppColors.primary,
                 ),

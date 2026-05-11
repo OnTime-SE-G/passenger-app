@@ -157,7 +157,7 @@ class _NearbyStopsScreenState extends State<NearbyStopsScreen> {
                   GlobalHeaderActions(
                     onRefresh: () => setState(() {}),
                     onNotifications: () {},
-                    onProfile: () {},
+                    onSettings: () {},
                   ),
                 ],
               ),

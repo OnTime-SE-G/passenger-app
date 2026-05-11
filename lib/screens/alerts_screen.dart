@@ -57,7 +57,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
           GlobalHeaderActions(
             onRefresh: _refresh,
             onNotifications: () {},
-            onProfile: () {},
+            onSettings: () {},
           ),
         ],
       ),

@@ -31,7 +31,7 @@ class _AppShellState extends State<AppShell> {
     _Tab(icon: Icons.directions_bus_outlined, activeIcon: Icons.directions_bus_rounded, label: 'Routes'),
     _Tab(icon: Icons.map_outlined, activeIcon: Icons.map_rounded, label: 'Live'),
     _Tab(icon: Icons.notifications_outlined, activeIcon: Icons.notifications_rounded, label: 'Alerts'),
-    _Tab(icon: Icons.person_outline_rounded, activeIcon: Icons.person_rounded, label: 'Profile'),
+    _Tab(icon: Icons.settings_outlined, activeIcon: Icons.settings_rounded, label: 'Settings'),
   ];
 
   @override

@@ -76,7 +76,7 @@ class _PassengerSearchHomeScreenState extends State<PassengerSearchHomeScreen> {
                           builder: (_) => const NotificationsSheet(),
                         );
                       },
-                      onProfile: () {
+                      onSettings: () {
                         AppTabController.instance.jumpTo(5);
                       },
                     ),

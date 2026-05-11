@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart';
 /// without needing a BuildContext or passing callbacks through the tree.
 ///
 /// Usage:
-///   AppTabController.instance.jumpTo(5); // → Profile tab
+///   AppTabController.instance.jumpTo(5); // → Settings tab
 class AppTabController extends ChangeNotifier {
   AppTabController._();
   static final AppTabController instance = AppTabController._();

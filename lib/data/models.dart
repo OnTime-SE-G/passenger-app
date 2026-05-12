@@ -66,6 +66,8 @@ class BusPosition {
   final int etaMinutes; // to the user's selected stop / destination
   final int occupancyPct;
   final int nextStopIndex; // index into route.stopIds
+  /// Live socket / REST label when available (web shows under route name).
+  final String driverDisplay;
 
   const BusPosition({
     required this.busId,
@@ -76,8 +78,10 @@ class BusPosition {
     required this.etaMinutes,
     required this.occupancyPct,
     required this.nextStopIndex,
+    this.driverDisplay = '',
   });
 }
+
 class RecentSearch {
   final String from;
   final String to;

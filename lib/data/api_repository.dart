@@ -78,13 +78,9 @@ class ApiRepository {
           .map((c) => lngLatToLatLng(c as List<dynamic>))
           .toList();
 
-      final rawStops = r['stops'] as List<dynamic>;
+      final rawStops = r['stops'] as List<dynamic>? ?? const [];
       final stopIds = rawStops
-          .map((s) {
-            final coord = (s as Map<String, dynamic>)['coordinates'] as List<dynamic>;
-            final loc = lngLatToLatLng(coord);
-            return '${loc.latitude},${loc.longitude}';
-          })
+          .map((s) => _canonicalStopIdForTransitStop(s as Map<String, dynamic>))
           .toList();
 
       return BusRoute(
@@ -99,6 +95,24 @@ class ApiRepository {
     }).toList();
   }
 
+  /// Transit route payloads usually omit stop `id`; match `/stops` rows by
+  /// coordinates so [stopById] resolves names and map markers correctly.
+  String _canonicalStopIdForTransitStop(Map<String, dynamic> s) {
+    final direct = s['id'];
+    if (direct != null) return direct.toString();
+    final coord = s['coordinates'] as List<dynamic>?;
+    if (coord == null || coord.length < 2) return '';
+    final loc = lngLatToLatLng(coord);
+    const tol = 1e-4;
+    for (final stop in _stops) {
+      if ((stop.location.latitude - loc.latitude).abs() <= tol &&
+          (stop.location.longitude - loc.longitude).abs() <= tol) {
+        return stop.id;
+      }
+    }
+    return '${loc.latitude},${loc.longitude}';
+  }
+
   Future<void> _loadBuses() async {
     final raw = await _api.getLiveBuses();
     _buses = raw
@@ -106,7 +120,9 @@ class ApiRepository {
               id: b['id'].toString(),
               number: b['fleet_code']?.toString() ?? b['id'].toString(),
               routeId: b['route_id']?.toString() ?? '',
-              driverName: 'Driver',
+              driverName: b['driver_name']?.toString() ??
+                  b['fleet_code']?.toString() ??
+                  '',
               capacity: (b['capacity'] as int?) ?? 50,
               status: b['status']?.toString(),
             ))
@@ -176,7 +192,9 @@ class ApiRepository {
                 id: b['id'].toString(),
                 number: b['fleet_code']?.toString() ?? b['id'].toString(),
                 routeId: routeId,
-                driverName: 'Driver',
+                driverName: b['driver_name']?.toString() ??
+                    b['fleet_code']?.toString() ??
+                    '',
                 capacity: (b['capacity'] as int?) ?? 50,
                 status: b['status']?.toString(),
               ))
@@ -205,6 +223,29 @@ class ApiRepository {
     for (final s in _stops) {
       if (s.id == id) return s;
     }
+    final comma = id.indexOf(',');
+    if (comma > 0 && comma < id.length - 1) {
+      final lat = double.tryParse(id.substring(0, comma));
+      final lng = double.tryParse(id.substring(comma + 1));
+      if (lat != null && lng != null) {
+        var bestName = 'Stop';
+        const tol = 1e-4;
+        for (final s in _stops) {
+          if ((s.location.latitude - lat).abs() <= tol &&
+              (s.location.longitude - lng).abs() <= tol) {
+            bestName = s.name;
+            break;
+          }
+        }
+        return BusStop(
+          id: id,
+          name: bestName,
+          address: '',
+          location: LatLng(lat, lng),
+          routeIds: const [],
+        );
+      }
+    }
     return BusStop(
       id: id,
       name: 'Stop',
@@ -215,8 +256,12 @@ class ApiRepository {
   }
 
   Bus busById(String id) {
+    final needle = id.trim();
     for (final b in _buses) {
-      if (b.id == id) return b;
+      if (b.id == needle ||
+          b.number.toUpperCase() == needle.toUpperCase()) {
+        return b;
+      }
     }
     return Bus(
       id: id,
@@ -309,68 +354,105 @@ class ApiRepository {
     }
   }
 
+  BusLiveStatus _busLiveStatusFromApi(String? s) {
+    if ((s ?? '').toLowerCase() == 'delayed') return BusLiveStatus.delayed;
+    return BusLiveStatus.onTime;
+  }
+
+  BusPosition? _busPositionFromRest(Map<String, dynamic> match, String resolvedBusId) {
+    // lat/lng may be null when the bus hasn't sent GPS yet (backend live_map is empty)
+    final rawLat = match['latitude'];
+    final rawLng = match['longitude'];
+    if (rawLat == null || rawLng == null) return null;
+    final lat = (rawLat as num).toDouble();
+    final lng = (rawLng as num).toDouble();
+    // Sanity-check: 0,0 is the ocean — treat as missing
+    if (lat == 0 && lng == 0) return null;
+    return BusPosition(
+      busId: resolvedBusId,
+      location: LatLng(lat, lng),
+      headingDeg: (match['heading'] as num?)?.toDouble() ?? 0,
+      speedKmh:
+          ((match['speed_kmh'] ?? match['speed']) as num?)?.toDouble() ?? 0,
+      status: _busLiveStatusFromApi(match['status']?.toString()),
+      etaMinutes: BusLocation.etaMinutesFromPayload(match),
+      occupancyPct: BusLocation.occupancyPctFromPayload(match),
+      nextStopIndex: 0,
+      driverDisplay: match['driver_name']?.toString() ??
+          match['fleet_code']?.toString() ??
+          '',
+    );
+  }
+
+  BusPosition _busPositionFromSocket(BusLocation loc, String canonicalBusId) {
+    return BusPosition(
+      busId: canonicalBusId,
+      location: LatLng(loc.lat, loc.lng),
+      headingDeg: loc.heading,
+      speedKmh: loc.speed,
+      status: _busLiveStatusFromApi(loc.status),
+      etaMinutes: loc.eta,
+      occupancyPct: loc.occupancyPct,
+      nextStopIndex: loc.nextStopIdx,
+      driverDisplay: loc.driverName,
+    );
+  }
+
   /// Live bus position stream.
-  /// 1. Seeds immediately from the REST /buses/live snapshot.
-  /// 2. Then streams real-time updates from the G2 WebSocket service
-  ///    (`G2_WS_URL`/v1/live) — same approach as ontime-web's
-  ///    tracking page (REST seed → socket updates).
-  Stream<BusPosition> watchBus(String busId) async* {
+  /// 1. Seeds immediately from the REST /buses/live snapshot (same matching rules as
+  ///    [ontime-passenger-web `/tracking`](https://github.com/OnTime-SE-G/ontime-passenger-web)).
+  /// 2. Streams Redis-backed payloads from G2 websocket (`G2_WS_URL/v1/live`), including
+  ///    `event: "eta_update"` handling inside [SocketService].
+  Stream<BusPosition> watchBus(String busId, {String? routeDbId}) async* {
+    var resolvedId = busId.trim();
+    var match = <String, dynamic>{};
+
     try {
       final raw = await _api.getLiveBuses();
-      final match = raw.firstWhere(
-        (b) =>
-            b['id'].toString() == busId ||
-            b['fleet_code']?.toString().toUpperCase() == busId.toUpperCase(),
-        orElse: () => <String, dynamic>{},
-      );
-      if (match.isNotEmpty &&
-          match['latitude'] != null &&
-          match['longitude'] != null) {
-        yield BusPosition(
-          busId: busId,
-          location: LatLng(
-            (match['latitude'] as num).toDouble(),
-            (match['longitude'] as num).toDouble(),
-          ),
-          headingDeg: (match['heading'] as num?)?.toDouble() ?? 0,
-          speedKmh: (match['speed'] as num?)?.toDouble() ?? 0,
-          status: (match['status']?.toString() ?? '') == 'delayed'
-              ? BusLiveStatus.delayed
-              : BusLiveStatus.onTime,
-          etaMinutes: 0,
-          occupancyPct: 50,
-          nextStopIndex: 0,
-        );
+      match = raw.cast<Map<String, dynamic>>().firstWhere(
+            (b) =>
+                b['id'].toString() == busId ||
+                b['fleet_code']?.toString().toUpperCase() ==
+                    busId.toUpperCase() ||
+                (routeDbId != null &&
+                    routeDbId.trim().isNotEmpty &&
+                    b['route_id']?.toString() == routeDbId.trim()),
+            orElse: () => <String, dynamic>{},
+          );
+      if (match.isNotEmpty) {
+        resolvedId = match['id'].toString();
+        // Only yield REST snapshot when coordinates are actually present
+        final restPos = _busPositionFromRest(match, resolvedId);
+        if (restPos != null) yield restPos;
       }
     } catch (_) {}
 
+    // Connect to websocket using plain `/v1/live` (no query params) — matches
+    // passenger-web `socketService.ts`. Server-side busId/routeId filters can
+    // silently drop messages when payload keys don't match camelCase expectation.
     SocketService.instance.connect();
-    await for (final loc in SocketService.instance.watchBus(busId).timeout(
-      const Duration(seconds: 8),
-      onTimeout: (sink) => sink.close(),
-    )) {
-      yield BusPosition(
-        busId: loc.busId,
-        location: LatLng(loc.lat, loc.lng),
-        headingDeg: loc.heading,
-        speedKmh: loc.speed,
-        status: loc.status == 'delayed'
-            ? BusLiveStatus.delayed
-            : BusLiveStatus.onTime,
-        etaMinutes: loc.eta,
-        occupancyPct: loc.occupancy == 'high'
-            ? 88
-            : loc.occupancy == 'medium'
-                ? 55
-                : 25,
-        nextStopIndex: 0,
-      );
+
+    await for (final loc in SocketService.instance.watchBus(resolvedId)) {
+      yield _busPositionFromSocket(loc, resolvedId);
     }
+  }
+
+  /// Stream of ALL live bus positions from the websocket.
+  /// Connects once and emits every bus update as it arrives.
+  /// Used by the Live Map tab to show all buses moving on the map.
+  Stream<BusLocation> streamAllBuses() {
+    SocketService.instance.connect();
+    return SocketService.instance.stream;
   }
 
   BusPosition snapshotFor(String busId) {
     try {
-      final bus = _buses.firstWhere((b) => b.id == busId);
+      final needle = busId.trim();
+      final bus = _buses.firstWhere(
+        (b) =>
+            b.id == needle ||
+            b.number.toUpperCase() == needle.toUpperCase(),
+      );
       BusRoute? route;
       for (final r in _routes) {
         if (r.id == bus.routeId || r.name == bus.routeId) {
@@ -380,7 +462,7 @@ class ApiRepository {
       }
       if (route != null && route.path.isNotEmpty) {
         return BusPosition(
-          busId: busId,
+          busId: bus.id,
           location: route.path.first,
           headingDeg: 0,
           speedKmh: 0,
@@ -388,6 +470,7 @@ class ApiRepository {
           etaMinutes: 0,
           occupancyPct: 0,
           nextStopIndex: 0,
+          driverDisplay: '',
         );
       }
     } catch (_) {}
@@ -400,6 +483,7 @@ class ApiRepository {
       etaMinutes: 0,
       occupancyPct: 0,
       nextStopIndex: 0,
+      driverDisplay: '',
     );
   }
 

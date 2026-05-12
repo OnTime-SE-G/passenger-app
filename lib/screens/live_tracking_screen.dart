@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -14,23 +15,115 @@ import '../widgets/map_widgets.dart';
 
 /// Live tracking — Voyager map + frosted route panel + stops list.
 class LiveTrackingScreen extends StatefulWidget {
-  const LiveTrackingScreen({super.key, required this.busId});
+  const LiveTrackingScreen({
+    super.key,
+    required this.busId,
+    /// Matches web `/tracking?routeDbId=` — improves REST + WS filtering when set.
+    this.routeDbId,
+  });
   final String busId;
+  final String? routeDbId;
 
   @override
   State<LiveTrackingScreen> createState() => _LiveTrackingScreenState();
 }
 
-class _LiveTrackingScreenState extends State<LiveTrackingScreen> {
+class _LiveTrackingScreenState extends State<LiveTrackingScreen>
+    with TickerProviderStateMixin {
   final _repo = ApiRepository.instance;
   final _mapCtl = MapController();
   late final Stream<BusPosition> _stream;
+  StreamSubscription<BusPosition>? _sub;
+
+  // ── Smooth position interpolation ─────────────────────────────────────────
+  // We keep two LatLng refs and tween between them so the marker glides
+  // continuously instead of snapping every WebSocket interval (~1-2 s).
+  late AnimationController _posAnim;
+  LatLng _fromLatLng = const LatLng(0, 0);
+  LatLng _toLatLng   = const LatLng(0, 0);
+  // Current interpolated position driven by the animation.
+  LatLng _animatedLatLng = const LatLng(0, 0);
+
+  // Heading interpolation (degrees)
+  double _fromHeading = 0;
+  double _toHeading   = 0;
+  double _animatedHeading = 0;
+
   BusPosition? _latest;
+  bool _hasLiveData = false;
 
   @override
   void initState() {
     super.initState();
-    _stream = _repo.watchBus(widget.busId).asBroadcastStream();
+
+    // Tween duration is slightly shorter than the WS interval so the marker
+    // always reaches the target before the next update arrives.
+    _posAnim = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    );
+
+    _posAnim.addListener(() {
+      if (!mounted) return;
+      final t = _posAnim.value;
+      final lat =
+          _fromLatLng.latitude  + (_toLatLng.latitude  - _fromLatLng.latitude)  * t;
+      final lng =
+          _fromLatLng.longitude + (_toLatLng.longitude - _fromLatLng.longitude) * t;
+
+      // Shortest-arc heading lerp
+      var dH = _toHeading - _fromHeading;
+      if (dH >  180) dH -= 360;
+      if (dH < -180) dH += 360;
+      _animatedHeading = _fromHeading + dH * t;
+
+      _animatedLatLng = LatLng(lat, lng);
+
+      // Move map camera smoothly with the marker
+      try { _mapCtl.move(_animatedLatLng, _mapCtl.camera.zoom); } catch (_) {}
+      setState(() {});
+    });
+
+    _stream = _repo
+        .watchBus(widget.busId, routeDbId: widget.routeDbId)
+        .asBroadcastStream();
+
+    _sub = _stream.listen((pos) {
+      if (!mounted) return;
+
+      final newLatLng = pos.location;
+      final isReal = newLatLng.latitude != 0 && newLatLng.longitude != 0;
+
+      if (isReal) {
+        // Seed from & to on very first real update
+        if (!_hasLiveData) {
+          _fromLatLng     = newLatLng;
+          _animatedLatLng = newLatLng;
+          _fromHeading    = pos.headingDeg;
+          _animatedHeading = pos.headingDeg;
+          _hasLiveData = true;
+        } else {
+          _fromLatLng  = _animatedLatLng; // start from where we are NOW
+          _fromHeading = _animatedHeading;
+        }
+        _toLatLng   = newLatLng;
+        _toHeading  = pos.headingDeg;
+
+        // Restart tween toward new target
+        _posAnim
+          ..stop()
+          ..forward(from: 0);
+      }
+
+      setState(() { _latest = pos; });
+    });
+  }
+
+  @override
+  void dispose() {
+    _sub?.cancel();
+    _posAnim.dispose();
+    super.dispose();
   }
 
   @override
@@ -40,19 +133,13 @@ class _LiveTrackingScreenState extends State<LiveTrackingScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: StreamBuilder<BusPosition>(
-        stream: _stream,
-        builder: (context, snap) {
-          final pos = snap.data ?? _latest ?? _repo.snapshotFor(widget.busId);
-          _latest = pos;
-
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (!mounted || !snap.hasData) return;
-            try {
-              _mapCtl.move(pos.location, _mapCtl.camera.zoom);
-            } catch (_) {}
-          });
-
+      body: Builder(
+        builder: (context) {
+          final pos = _latest ?? _repo.snapshotFor(widget.busId);
+          // Use the interpolated position for the marker; fall back to latest
+          // from REST snapshot when WebSocket hasn't arrived yet.
+          final markerPos = _hasLiveData ? _animatedLatLng : pos.location;
+          final markerHeading = _hasLiveData ? _animatedHeading : pos.headingDeg;
           final delayed = pos.status == BusLiveStatus.delayed;
 
           return Stack(
@@ -60,7 +147,7 @@ class _LiveTrackingScreenState extends State<LiveTrackingScreen> {
               Positioned.fill(
                 child: buildMap(
                   controller: _mapCtl,
-                  center: pos.location,
+                  center: markerPos,
                   zoom: 14,
                   layers: [
                     const AppMapTiles(),
@@ -68,7 +155,7 @@ class _LiveTrackingScreenState extends State<LiveTrackingScreen> {
                       polylines: [
                         Polyline(
                           points: route.path
-                              .take(_snapIndex(route, pos.location))
+                              .take(_snapIndex(route, markerPos))
                               .toList(),
                           strokeWidth: 4,
                           color: AppColors.routePassed,
@@ -80,7 +167,7 @@ class _LiveTrackingScreenState extends State<LiveTrackingScreen> {
                       polylines: [
                         Polyline(
                           points: route.path
-                              .skip(_snapIndex(route, pos.location))
+                              .skip(_snapIndex(route, markerPos))
                               .toList(),
                           strokeWidth: 5,
                           color: route.accentColor,
@@ -100,10 +187,10 @@ class _LiveTrackingScreenState extends State<LiveTrackingScreen> {
                           );
                         }),
                         Marker(
-                          point: pos.location,
+                          point: markerPos,
                           width: 48,
                           height: 48,
-                          child: LiveBusMarker(heading: pos.headingDeg),
+                          child: LiveBusMarker(heading: markerHeading),
                         ),
                       ],
                     ),
@@ -142,6 +229,46 @@ class _LiveTrackingScreenState extends State<LiveTrackingScreen> {
                                 fontSize: 17,
                                 color: AppColors.onSurface,
                               ),
+                            ),
+                          ),
+                          // Live / waiting badge
+                          Container(
+                            margin: const EdgeInsets.only(right: AppSpacing.sm),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 3,
+                            ),
+                            decoration: BoxDecoration(
+                              color: _hasLiveData
+                                  ? AppColors.success.withOpacity(0.12)
+                                  : Colors.orange.withOpacity(0.12),
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  width: 6,
+                                  height: 6,
+                                  decoration: BoxDecoration(
+                                    color: _hasLiveData
+                                        ? AppColors.success
+                                        : Colors.orange,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  _hasLiveData ? 'Live' : 'Syncing…',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                    color: _hasLiveData
+                                        ? AppColors.success
+                                        : Colors.orange,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ],
@@ -234,13 +361,19 @@ class _LiveTrackingScreenState extends State<LiveTrackingScreen> {
                                         ),
                                       ),
                                       const SizedBox(height: 4),
-                                      Text(
-                                        'Driver: ${bus.driverName}',
-                                        style: GoogleFonts.inter(
-                                          fontSize: 13,
-                                          color: AppColors.onSurfaceVariant,
-                                        ),
-                                      ),
+                                      Builder(builder: (_) {
+                                        final name = pos.driverDisplay.isNotEmpty
+                                            ? pos.driverDisplay
+                                            : bus.driverName;
+                                        if (name.isEmpty) return const SizedBox.shrink();
+                                        return Text(
+                                          'Driver: $name',
+                                          style: GoogleFonts.inter(
+                                            fontSize: 13,
+                                            color: AppColors.onSurfaceVariant,
+                                          ),
+                                        );
+                                      }),
                                     ],
                                   ),
                                 ),
@@ -253,7 +386,10 @@ class _LiveTrackingScreenState extends State<LiveTrackingScreen> {
                                   child: _MiniStat(
                                     icon: Icons.schedule,
                                     label: 'ETA',
-                                    value: '${pos.etaMinutes} min',
+                                    value: pos.etaMinutes > 0
+                                        ? '${pos.etaMinutes} min'
+                                        : '— min',
+                                    dimmed: pos.etaMinutes == 0,
                                   ),
                                 ),
                                 const SizedBox(width: 10),
@@ -261,8 +397,10 @@ class _LiveTrackingScreenState extends State<LiveTrackingScreen> {
                                   child: _MiniStat(
                                     icon: Icons.speed,
                                     label: 'Speed',
-                                    value:
-                                        '${pos.speedKmh.toStringAsFixed(0)} km/h',
+                                    value: pos.speedKmh > 0
+                                        ? '${pos.speedKmh.toStringAsFixed(0)} km/h'
+                                        : '— km/h',
+                                    dimmed: pos.speedKmh == 0,
                                   ),
                                 ),
                                 const SizedBox(width: 10),
@@ -270,7 +408,10 @@ class _LiveTrackingScreenState extends State<LiveTrackingScreen> {
                                   child: _MiniStat(
                                     icon: Icons.groups_outlined,
                                     label: 'Load',
-                                    value: '${pos.occupancyPct}%',
+                                    value: pos.occupancyPct > 0
+                                        ? '${pos.occupancyPct}%'
+                                        : '—%',
+                                    dimmed: pos.occupancyPct == 0,
                                   ),
                                 ),
                               ],
@@ -349,11 +490,14 @@ class _MiniStat extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.value,
+    this.dimmed = false,
   });
 
   final IconData icon;
   final String label;
   final String value;
+  /// When true, renders the value in a muted style — signals "no data yet".
+  final bool dimmed;
 
   @override
   Widget build(BuildContext context) {
@@ -368,14 +512,21 @@ class _MiniStat extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Icon(icon, size: 16, color: AppColors.onSurfaceVariant),
+          Icon(icon,
+              size: 16,
+              color: dimmed
+                  ? AppColors.onSurfaceVariant.withOpacity(0.5)
+                  : AppColors.onSurfaceVariant),
           const SizedBox(height: 4),
           Text(
             value,
             style: GoogleFonts.inter(
-              fontWeight: FontWeight.w700,
+              fontWeight: dimmed ? FontWeight.w500 : FontWeight.w700,
+              fontStyle: dimmed ? FontStyle.italic : FontStyle.normal,
               fontSize: 15,
-              color: AppColors.onSurface,
+              color: dimmed
+                  ? AppColors.onSurfaceVariant.withOpacity(0.6)
+                  : AppColors.onSurface,
             ),
           ),
           Text(

@@ -8,7 +8,7 @@ import '../services/app_tab_controller.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
 import 'alerts_screen.dart';
-import 'live_tracking_screen.dart';
+import 'live_map_screen.dart';
 import 'nearby_bus_routes_screen.dart';
 import 'nearby_stops_screen.dart';
 import 'passenger_search_home_screen.dart';
@@ -53,7 +53,7 @@ class _AppShellState extends State<AppShell> {
       case 0: return const PassengerSearchHomeScreen();
       case 1: return const NearbyStopsScreen();
       case 2: return const NearbyBusRoutesScreen();
-      case 3: return const LiveMapPlaceholder();
+      case 3: return const LiveMapScreen();
       case 4: return const AlertsScreen();
       case 5: return const ProfileScreen();
       default: return const PassengerSearchHomeScreen();
@@ -77,12 +77,13 @@ class _AppShellState extends State<AppShell> {
   }
 }
 
+// LiveMapPlaceholder kept as a thin alias in case it is referenced elsewhere.
 class LiveMapPlaceholder extends StatelessWidget {
   const LiveMapPlaceholder({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return const LiveTrackingScreen(busId: 'b1');
+    return const LiveMapScreen();
   }
 }
 

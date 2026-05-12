@@ -222,6 +222,7 @@ class _NearbyBusRoutesScreenState extends State<NearbyBusRoutesScreen> {
                               MaterialPageRoute<void>(
                                 builder: (_) => LiveTrackingScreen(
                                   busId: row.bus.id,
+                                  routeDbId: row.route.id,
                                 ),
                               ),
                             );

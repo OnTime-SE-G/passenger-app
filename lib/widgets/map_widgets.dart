@@ -1,33 +1,49 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../theme/app_colors.dart';
 
-// Mapbox token — injected at build time via:
-//   flutter run --dart-define=MAPBOX_TOKEN=pk.eyJ1...
-// Falls back to empty string (tiles won't load without a valid token).
-const String _mapboxToken = String.fromEnvironment('MAPBOX_TOKEN', defaultValue: '');
+/// Compile-time override (`flutter run --dart-define=MAPBOX_TOKEN=...`).
+/// Must be a const [String.fromEnvironment] — non-const calls throw on web.
+const String _kMapboxTokenFromDefine =
+    String.fromEnvironment('MAPBOX_TOKEN', defaultValue: '');
 
-/// Mapbox Streets basemap — identical style to ontime-web's tracking page.
+/// Mapbox public token: `--dart-define=MAPBOX_TOKEN=pk...` or `assets/env/mapbox.env`.
+String mapboxAccessToken() {
+  final fromDefine = _kMapboxTokenFromDefine.trim();
+  if (fromDefine.isNotEmpty) return fromDefine;
+  try {
+    final fromFile = dotenv.env['MAPBOX_TOKEN']?.trim();
+    if (fromFile != null && fromFile.isNotEmpty) return fromFile;
+  } on Error {
+    // Tests / isolates that never called dotenv.load().
+  }
+  return '';
+}
+
+/// Mapbox Streets raster tiles — same style family as ontime-web (`streets-v12`).
+///
+/// Rendering uses [flutter_map]; basemap tiles are served by Mapbox (not Carto/OSM direct).
 class AppMapTiles extends StatelessWidget {
   const AppMapTiles({super.key});
 
   @override
   Widget build(BuildContext context) {
-    if (_mapboxToken.isEmpty) {
-      // Fallback to open Carto tiles when no token is configured
-      return TileLayer(
-        urlTemplate:
-            'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-        retinaMode: MediaQuery.of(context).devicePixelRatio > 1.5,
-        userAgentPackageName: 'com.ontime.passenger_app',
-        subdomains: const ['a', 'b', 'c', 'd'],
-      );
-    }
+    final token = mapboxAccessToken();
+    assert(() {
+      if (token.isEmpty) {
+        debugPrint(
+          'MAPBOX_TOKEN is empty. Set assets/env/mapbox.env or '
+          '--dart-define=MAPBOX_TOKEN=... — Mapbox tiles will not load.',
+        );
+      }
+      return true;
+    }());
     return TileLayer(
       urlTemplate:
-          'https://api.mapbox.com/styles/v1/mapbox/streets-v12/tiles/{z}/{x}/{y}{r}?access_token=$_mapboxToken',
+          'https://api.mapbox.com/styles/v1/mapbox/streets-v12/tiles/{z}/{x}/{y}{r}?access_token=$token',
       retinaMode: MediaQuery.of(context).devicePixelRatio > 1.5,
       userAgentPackageName: 'com.ontime.passenger_app',
       tileSize: 512,
@@ -214,6 +230,7 @@ FlutterMap buildMap({
   required List<Widget> layers,
   bool interactive = true,
 }) {
+  final token = mapboxAccessToken();
   return FlutterMap(
     mapController: controller,
     options: MapOptions(
@@ -223,6 +240,21 @@ FlutterMap buildMap({
         flags: interactive ? InteractiveFlag.all : InteractiveFlag.none,
       ),
     ),
-    children: layers,
+    children: [
+      ...layers,
+      if (token.isNotEmpty)
+        RichAttributionWidget(
+          attributions: [
+            const TextSourceAttribution(
+              'Mapbox',
+              prependCopyright: true,
+            ),
+            const TextSourceAttribution(
+              'OpenStreetMap',
+              prependCopyright: true,
+            ),
+          ],
+        ),
+    ],
   );
 }

@@ -178,7 +178,10 @@ class BusTile extends StatelessWidget {
     return AppCard(
       onTap: () => Navigator.of(context).push(
         MaterialPageRoute<void>(
-          builder: (_) => LiveTrackingScreen(busId: bus.id),
+          builder: (_) => LiveTrackingScreen(
+            busId: bus.id,
+            routeDbId: bus.routeId,
+          ),
         ),
       ),
       borderColor: highlight ? AppColors.primary.withOpacity(0.5) : null,

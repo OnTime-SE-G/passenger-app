@@ -50,3 +50,7 @@ app.*.map.json
 .env
 .env.*
 *.secret
+
+# Secret env files
+assets/env/
+*.env

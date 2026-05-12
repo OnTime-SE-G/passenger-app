@@ -146,10 +146,21 @@ class StopMarker extends StatelessWidget {
   }
 }
 
-/// Live bus marker — circular badge using route accent (`route.color` on web).
+/// Beautiful SVG-quality live bus marker.
+/// Draws a top-down bus silhouette — forward (nose) points UP (north) at heading=0.
+/// Heading rotation is applied internally.
 class LiveBusMarker extends StatefulWidget {
-  const LiveBusMarker({super.key, this.heading = 0});
+  const LiveBusMarker({
+    super.key,
+    this.heading = 0,
+    this.color,
+    this.selected = false,
+    this.fleetCode,
+  });
   final double heading;
+  final Color? color;
+  final bool selected;
+  final String? fleetCode;
 
   @override
   State<LiveBusMarker> createState() => _LiveBusMarkerState();
@@ -157,70 +168,189 @@ class LiveBusMarker extends StatefulWidget {
 
 class _LiveBusMarkerState extends State<LiveBusMarker>
     with SingleTickerProviderStateMixin {
-  late final AnimationController _c;
+  late final AnimationController _pulse;
 
   @override
   void initState() {
     super.initState();
-    _c = AnimationController(
+    _pulse = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 2000),
+      duration: const Duration(milliseconds: 2200),
     )..repeat();
   }
 
   @override
   void dispose() {
-    _c.dispose();
+    _pulse.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final color = widget.color ?? AppColors.primaryContainer;
     return AnimatedBuilder(
-      animation: _c,
-      builder: (_, __) {
-        return Stack(
-          alignment: Alignment.center,
-          children: [
-            Opacity(
-              opacity: (1 - _c.value).clamp(0.0, 0.45),
-              child: Container(
-                width: 56 * _c.value,
-                height: 56 * _c.value,
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.18),
-                  shape: BoxShape.circle,
+      animation: _pulse,
+      builder: (_, __) => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Transform.rotate(
+            angle: widget.heading * 3.14159265359 / 180,
+            child: CustomPaint(
+              size: const Size(56, 56),
+              painter: _BusBodyPainter(
+                color: color,
+                pulseT: _pulse.value,
+                selected: widget.selected,
+              ),
+            ),
+          ),
+          if (widget.fleetCode != null && widget.fleetCode!.isNotEmpty)
+            Container(
+              margin: const EdgeInsets.only(top: 2),
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(5),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.18),
+                    blurRadius: 5,
+                  ),
+                ],
+              ),
+              child: Text(
+                widget.fleetCode!,
+                style: TextStyle(
+                  fontSize: 9,
+                  fontWeight: FontWeight.w800,
+                  color: color,
+                  letterSpacing: 0.2,
                 ),
               ),
             ),
-            Transform.rotate(
-              angle: widget.heading * 3.14159265359 / 180,
-              child: Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: AppColors.primaryContainer,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.22),
-                      blurRadius: 10,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
-                ),
-                child: const Icon(
-                  Icons.directions_bus,
-                  color: Colors.white,
-                  size: 22,
-                ),
-              ),
-            ),
-          ],
-        );
-      },
+        ],
+      ),
     );
   }
+}
+
+/// Custom painter that draws a beautiful top-down bus silhouette.
+class _BusBodyPainter extends CustomPainter {
+  const _BusBodyPainter({
+    required this.color,
+    required this.pulseT,
+    required this.selected,
+  });
+
+  final Color color;
+  final double pulseT;
+  final bool selected;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final cx = size.width / 2;
+    final cy = size.height / 2;
+
+    // ── Pulsing halo ─────────────────────────────────────────────────────────
+    final haloR = 18.0 + 14.0 * pulseT;
+    canvas.drawCircle(
+      Offset(cx, cy),
+      haloR,
+      Paint()..color = color.withOpacity((0.5 * (1 - pulseT)).clamp(0.0, 0.5)),
+    );
+
+    // ── Bus body geometry ─────────────────────────────────────────────────────
+    // Nose at TOP (y-min). Rear at BOTTOM (y-max). Horizontally centered.
+    final bw = size.width * 0.50;   // ~28 px
+    final bh = size.height * 0.70;  // ~39 px
+    final bl = cx - bw / 2;
+    final bt = cy - bh / 2;
+    final br = bl + bw;
+    final bb = bt + bh;
+    final rMain = Radius.circular(bw * 0.36);
+
+    final bodyRect = RRect.fromRectAndRadius(
+      Rect.fromLTRB(bl, bt, br, bb),
+      rMain,
+    );
+
+    // Drop shadow
+    canvas.drawRRect(
+      bodyRect.inflate(1).shift(const Offset(0, 3)),
+      Paint()
+        ..color = Colors.black.withOpacity(0.30)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6),
+    );
+
+    // Main body fill
+    canvas.drawRRect(bodyRect, Paint()..color = color);
+
+    // ── Roof strip — front 28 % of body, darker shade ────────────────────────
+    final roofH = bh * 0.28;
+    final roofColor = Color.lerp(color, Colors.black, 0.22)!;
+    canvas.drawRRect(
+      RRect.fromLTRBAndCorners(
+        bl, bt, br, bt + roofH,
+        topLeft: rMain,
+        topRight: rMain,
+      ),
+      Paint()..color = roofColor,
+    );
+
+    // Windscreen highlight inside roof
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(bl + 4, bt + 4, bw - 8, roofH * 0.60),
+        Radius.circular(bw * 0.20),
+      ),
+      Paint()..color = Colors.white.withOpacity(0.20),
+    );
+
+    // ── Side windows (2 rows, 1 window each side) ────────────────────────────
+    final ww = bw * 0.29;
+    final wh = bh * 0.17;
+    const wr = Radius.circular(2.5);
+    final windowPaint = Paint()..color = Colors.white.withOpacity(0.88);
+    final wy1 = bt + roofH + 5;
+    final wy2 = wy1 + wh + 5;
+    for (final wy in [wy1, wy2]) {
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(Rect.fromLTWH(bl + 3, wy, ww, wh), wr),
+        windowPaint,
+      );
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(Rect.fromLTWH(br - 3 - ww, wy, ww, wh), wr),
+        windowPaint,
+      );
+    }
+
+    // ── Headlights ────────────────────────────────────────────────────────────
+    final hlPaint = Paint()..color = const Color(0xFFFFF176);
+    canvas.drawCircle(Offset(bl + 5, bt + 5), 2.5, hlPaint);
+    canvas.drawCircle(Offset(br - 5, bt + 5), 2.5, hlPaint);
+
+    // ── White border ──────────────────────────────────────────────────────────
+    canvas.drawRRect(
+      bodyRect,
+      Paint()
+        ..color = Colors.white.withOpacity(selected ? 1.0 : 0.90)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = selected ? 2.5 : 2.0,
+    );
+
+    // ── Direction arrow (triangular nose) ────────────────────────────────────
+    final aw = bw * 0.42;
+    final arrowPath = Path()
+      ..moveTo(cx, bt - 6)
+      ..lineTo(cx - aw / 2, bt + 2)
+      ..lineTo(cx + aw / 2, bt + 2)
+      ..close();
+    canvas.drawPath(arrowPath, Paint()..color = Colors.white);
+  }
+
+  @override
+  bool shouldRepaint(_BusBodyPainter old) =>
+      old.pulseT != pulseT || old.color != color || old.selected != selected;
 }
 
 FlutterMap buildMap({

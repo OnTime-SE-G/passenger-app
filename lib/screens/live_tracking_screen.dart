@@ -188,9 +188,13 @@ class _LiveTrackingScreenState extends State<LiveTrackingScreen>
                         }),
                         Marker(
                           point: markerPos,
-                          width: 48,
-                          height: 48,
-                          child: LiveBusMarker(heading: markerHeading),
+                          width: 72,
+                          height: 78,
+                          child: LiveBusMarker(
+                            heading: markerHeading,
+                            color: route.accentColor,
+                            selected: true,
+                          ),
                         ),
                       ],
                     ),
@@ -662,18 +666,20 @@ class _StopListTile extends StatelessWidget {
 }
 
 extension BusRouteTrackingColors on BusRoute {
+  static const _palette = [
+    Color(0xFF2563EB), // blue
+    Color(0xFF7C3AED), // purple
+    Color(0xFF0891B2), // cyan
+    Color(0xFFEA580C), // orange
+    Color(0xFF16A34A), // green
+    Color(0xFFDC2626), // red
+    Color(0xFF0D9488), // teal
+    Color(0xFFDB2777), // pink
+  ];
+
   Color get accentColor {
-    switch (id) {
-      case 'r1':
-        return const Color(0xFF2563EB);
-      case 'r2':
-        return const Color(0xFF7C3AED);
-      case 'r3':
-        return const Color(0xFF0891B2);
-      case 'r4':
-        return const Color(0xFFEA580C);
-      default:
-        return AppColors.primaryContainer;
-    }
+    if (id.isEmpty) return AppColors.primaryContainer;
+    final hash = id.codeUnits.fold(0, (acc, c) => (acc * 31 + c) & 0x7FFFFFFF);
+    return _palette[hash % _palette.length];
   }
 }

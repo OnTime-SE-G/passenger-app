@@ -252,7 +252,7 @@ class _NearbyStopsScreenState extends State<NearbyStopsScreen> {
                       child: PrimaryButton(
                         label: _selected == null
                             ? 'Select Stop'
-                            : 'Select ${_selected!.name}',
+                            : 'View Available Buses',
                         icon: Icons.arrow_forward,
                         onPressed: _selected == null
                             ? null

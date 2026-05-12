@@ -235,10 +235,11 @@ class _LiveMapScreenState extends State<LiveMapScreen>
                     final displayPos = anim?.current ?? LatLng(loc.lat, loc.lng);
                     final displayHeading = anim?.currentHeading ?? loc.heading;
                     final isSelected = loc.busId == _selectedBusId;
+                    final routeColor = _accentColor(loc.routeId);
                     return Marker(
                       point: displayPos,
-                      width: isSelected ? 56 : 48,
-                      height: isSelected ? 56 : 48,
+                      width: isSelected ? 72 : 64,
+                      height: isSelected ? 80 : 72,
                       child: GestureDetector(
                         onTap: () {
                           setState(() {
@@ -249,10 +250,11 @@ class _LiveMapScreenState extends State<LiveMapScreen>
                             _mapCtl.move(displayPos, _mapCtl.camera.zoom);
                           }
                         },
-                        child: _BusMapMarker(
-                          loc: loc.copyWith(),
-                          isSelected: isSelected,
+                        child: LiveBusMarker(
                           heading: displayHeading,
+                          color: routeColor,
+                          selected: isSelected,
+                          fleetCode: loc.fleetCode.isNotEmpty ? loc.fleetCode : null,
                         ),
                       ),
                     );
@@ -591,6 +593,23 @@ class _LiveMapScreenState extends State<LiveMapScreen>
       ),
     );
   }
+
+  static const _colorPalette = [
+    Color(0xFF2563EB),
+    Color(0xFF7C3AED),
+    Color(0xFF0891B2),
+    Color(0xFFEA580C),
+    Color(0xFF16A34A),
+    Color(0xFFDC2626),
+    Color(0xFF0D9488),
+    Color(0xFFDB2777),
+  ];
+
+  Color _accentColor(String routeId) {
+    if (routeId.isEmpty) return AppColors.primaryContainer;
+    final hash = routeId.codeUnits.fold(0, (acc, c) => (acc * 31 + c) & 0x7FFFFFFF);
+    return _colorPalette[hash % _colorPalette.length];
+  }
 }
 
 /// Per-bus animation state — immutable value object.
@@ -630,125 +649,6 @@ class _BusAnim {
         toHeading: toHeading ?? this.toHeading,
         currentHeading: currentHeading ?? this.currentHeading,
       );
-}
-
-class _BusMapMarker extends StatefulWidget {
-  const _BusMapMarker({
-    required this.loc,
-    required this.isSelected,
-    this.heading,
-  });
-  final BusLocation loc;
-  final bool isSelected;
-  /// Overrides loc.heading with the smoothly interpolated value.
-  final double? heading;
-
-  @override
-  State<_BusMapMarker> createState() => _BusMapMarkerState();
-}
-
-class _BusMapMarkerState extends State<_BusMapMarker>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _c;
-
-  @override
-  void initState() {
-    super.initState();
-    _c = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 2000),
-    )..repeat();
-  }
-
-  @override
-  void dispose() {
-    _c.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _c,
-      builder: (_, __) {
-        return Stack(
-          alignment: Alignment.center,
-          children: [
-            if (widget.isSelected)
-              Opacity(
-                opacity: (1 - _c.value).clamp(0.0, 0.5),
-                child: Container(
-                  width: 56 * _c.value,
-                  height: 56 * _c.value,
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.25),
-                    shape: BoxShape.circle,
-                  ),
-                ),
-              ),
-            Transform.rotate(
-              angle: (widget.heading ?? widget.loc.heading) * 3.14159265359 / 180,
-              child: Container(
-                width: widget.isSelected ? 48 : 40,
-                height: widget.isSelected ? 48 : 40,
-                decoration: BoxDecoration(
-                  color: widget.isSelected
-                      ? AppColors.primary
-                      : AppColors.primaryContainer,
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: Colors.white,
-                    width: widget.isSelected ? 3 : 2,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.22),
-                      blurRadius: 10,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
-                ),
-                child: Icon(
-                  Icons.directions_bus,
-                  color: Colors.white,
-                  size: widget.isSelected ? 24 : 20,
-                ),
-              ),
-            ),
-            // Fleet code label
-            if (widget.loc.fleetCode.isNotEmpty)
-              Positioned(
-                bottom: -2,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 4,
-                    vertical: 1,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(4),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.15),
-                        blurRadius: 4,
-                      ),
-                    ],
-                  ),
-                  child: Text(
-                    widget.loc.fleetCode,
-                    style: GoogleFonts.inter(
-                      fontSize: 8,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.primary,
-                    ),
-                  ),
-                ),
-              ),
-          ],
-        );
-      },
-    );
-  }
 }
 
 class _StatCard extends StatelessWidget {

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_map/flutter_map.dart';
-import 'package:latlong2/latlong.dart';
+import 'package:latlong2/latlong.dart' hide Path;
 
 import '../theme/app_colors.dart';
 
@@ -41,6 +41,12 @@ class AppMapTiles extends StatelessWidget {
       }
       return true;
     }());
+    if (token.isEmpty) {
+      return TileLayer(
+        urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+        userAgentPackageName: 'com.ontime.passenger_app',
+      );
+    }
     return TileLayer(
       urlTemplate:
           'https://api.mapbox.com/styles/v1/mapbox/streets-v12/tiles/{z}/{x}/{y}{r}?access_token=$token',

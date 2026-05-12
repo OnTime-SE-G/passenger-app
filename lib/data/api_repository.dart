@@ -308,6 +308,8 @@ class ApiRepository {
       };
 
       final alerts = <ServiceAlert>[];
+      final routesWithIssues = <String>{};
+
       for (final bus in buses) {
         final status = bus['status']?.toString() ?? '';
         final routeId = bus['route_id']?.toString() ?? '';
@@ -317,6 +319,7 @@ class ApiRepository {
         final fleet = bus['fleet_code']?.toString() ?? bus['id'].toString();
 
         if (status == 'breakdown' || status == 'incident') {
+          routesWithIssues.add(routeId);
           alerts.add(ServiceAlert(
             id: 'inc-${bus['id']}',
             type: AlertType.disruption,
@@ -327,6 +330,7 @@ class ApiRepository {
             timestamp: DateTime.now(),
           ));
         } else if (status == 'delayed') {
+          routesWithIssues.add(routeId);
           alerts.add(ServiceAlert(
             id: 'dly-${bus['id']}',
             type: AlertType.delay,
@@ -337,17 +341,39 @@ class ApiRepository {
             timestamp: DateTime.now(),
           ));
         } else if (status == 'inactive' || status == 'maintenance') {
+          routesWithIssues.add(routeId);
           alerts.add(ServiceAlert(
             id: 'off-${bus['id']}',
-            type: AlertType.info,
+            type: AlertType.inactive,
             routeCode: routeNum,
-            title: 'Route $routeNum — Reduced Service',
-            body: 'Bus $fleet is currently offline ($status). '
+            title: 'Route $routeNum — Bus Offline',
+            body: 'Bus $fleet is currently offline. '
                 'Fewer buses may be running on this route.',
             timestamp: DateTime.now(),
           ));
         }
       }
+
+      // Add "Operating Normally" info alerts for active routes with no issues
+      for (final route in routes) {
+        final routeId = route['id']?.toString() ?? '';
+        if (routesWithIssues.contains(routeId)) continue;
+        final routeNum = route['route_number']?.toString() ?? routeId;
+        final routeName = route['name']?.toString() ?? 'Route $routeNum';
+        final hasActiveBus = buses.any((b) =>
+          b['route_id']?.toString() == routeId &&
+          (b['status']?.toString() ?? '') == 'active');
+        if (!hasActiveBus) continue;
+        alerts.add(ServiceAlert(
+          id: 'ok-$routeId',
+          type: AlertType.info,
+          routeCode: routeNum,
+          title: 'Route $routeNum — Operating Normally',
+          body: '$routeName is running on schedule with no reported disruptions.',
+          timestamp: DateTime.now(),
+        ));
+      }
+
       return alerts;
     } catch (_) {
       return [];

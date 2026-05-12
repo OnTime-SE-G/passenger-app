@@ -48,6 +48,28 @@ class _PassengerSearchHomeScreenState extends State<PassengerSearchHomeScreen> {
     super.dispose();
   }
 
+  String get _networkStatus {
+    final buses = _repo.buses;
+    if (buses.any((b) => b.status == 'breakdown' || b.status == 'incident')) {
+      return 'Service Disruptions';
+    }
+    if (buses.any((b) => b.status == 'delayed')) {
+      return 'Minor Delays';
+    }
+    return 'Good Service';
+  }
+
+  Color get _networkStatusColor {
+    switch (_networkStatus) {
+      case 'Service Disruptions':
+        return const Color(0xFFDC2626);
+      case 'Minor Delays':
+        return const Color(0xFFD97706);
+      default:
+        return const Color(0xFF16A34A);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final center = _repo.userLocation;
@@ -374,18 +396,39 @@ class _PassengerSearchHomeScreenState extends State<PassengerSearchHomeScreen> {
                                     decoration: glassPanelDecoration(radius: 12),
                                     child: Row(
                                       children: [
+                                        Container(
+                                          width: 8,
+                                          height: 8,
+                                          decoration: BoxDecoration(
+                                            color: _networkStatusColor,
+                                            shape: BoxShape.circle,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
                                         Expanded(
-                                          child: Text(
-                                            'Map preview',
-                                            style: GoogleFonts.inter(
-                                              fontSize: 13,
-                                              fontWeight: FontWeight.w600,
-                                              color: AppColors.onSurfaceVariant,
+                                          child: RichText(
+                                            text: TextSpan(
+                                              style: GoogleFonts.inter(
+                                                fontSize: 13,
+                                                fontWeight: FontWeight.w700,
+                                                color: AppColors.onSurface,
+                                              ),
+                                              children: [
+                                                const TextSpan(text: 'Live Network: '),
+                                                TextSpan(
+                                                  text: _networkStatus,
+                                                  style: TextStyle(color: _networkStatusColor),
+                                                ),
+                                              ],
                                             ),
                                           ),
                                         ),
                                         IconButton(
-                                          onPressed: () {},
+                                          onPressed: () {
+                                            ApiRepository.instance.refresh().then((_) {
+                                              if (context.mounted) setState(() {});
+                                            });
+                                          },
                                           icon: const Icon(Icons.my_location),
                                           color: AppColors.primary,
                                           iconSize: 20,

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -19,11 +21,19 @@ class _AlertsScreenState extends State<AlertsScreen> {
   final _repo = ApiRepository.instance;
   List<ServiceAlert> _alerts = [];
   bool _refreshing = false;
+  Timer? _timer;
 
   @override
   void initState() {
     super.initState();
     _loadAlerts();
+    _timer = Timer.periodic(const Duration(seconds: 30), (_) => _loadAlerts());
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
   }
 
   Future<void> _loadAlerts() async {
@@ -264,6 +274,16 @@ class _AlertCard extends StatelessWidget {
           label: 'DELAY',
           labelColor: const Color(0xFFD97706),
           labelBg: const Color(0xFFD97706).withOpacity(0.10),
+        );
+      case AlertType.inactive:
+        return _AlertCfg(
+          icon: Icons.do_not_disturb_on_outlined,
+          iconColor: const Color(0xFF7C3AED),
+          iconBg: const Color(0xFF7C3AED).withOpacity(0.10),
+          borderColor: const Color(0xFF7C3AED),
+          label: 'OFFLINE',
+          labelColor: const Color(0xFF7C3AED),
+          labelBg: const Color(0xFF7C3AED).withOpacity(0.10),
         );
       case AlertType.info:
         return _AlertCfg(

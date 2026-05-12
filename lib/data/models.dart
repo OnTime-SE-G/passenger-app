@@ -94,7 +94,7 @@ class RecentSearch {
   });
 }
 
-enum AlertType { disruption, delay, info }
+enum AlertType { disruption, delay, inactive, info }
 
 class ServiceAlert {
   final String id;
